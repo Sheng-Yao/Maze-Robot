@@ -47,11 +47,6 @@ void loop() {
   //get the sum of left and right distance
   byte totalLeftRightDistance = leftDistance + rightDistance;
 
-  //temperory set for end point indication
-  // if(totalLeftRightDistance == LEFTRIGHTDISTANCE && frontDistance < MINFRONTALLOWDISTANCE){
-  //   turnLeft();
-  //   while(1);
-  // }
 
 
 
