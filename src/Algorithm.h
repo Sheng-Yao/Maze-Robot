@@ -1,5 +1,8 @@
 #include <Arduino.h>
 
+//digital pin 2 is the interrupt pin
+#define InterruptPin 2
+
 String tempBranches;
 
 bool isReturning = false;
@@ -8,12 +11,18 @@ String transitionPoint = "";
 
 bool isAtPotentialEndingPoint = false;
 
-String finalSequences = "";
-
 bool isEndingPoint = false;
 
+bool isInSearchingMode = false;
 
+void modeChanging(){
+    if(isInSearchingMode){
+        isInSearchingMode = false;
+    }else{
+        isInSearchingMode = true;
+    }
 
+}
 
 
 

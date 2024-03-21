@@ -5,7 +5,7 @@
 //Enable pin (to control the speed using PWM)
 #define enableMotor1 3
 //Motor pin (controlling the direction)
-#define motor1A 2
+#define motor1A 1
 #define motor1B 4
 
 //Motor 2

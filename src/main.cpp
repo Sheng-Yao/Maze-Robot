@@ -4,6 +4,8 @@
 #include "I2C_LCDFunction.h"
 #include "EEPROMFunction.h"
 
+//current plan is by reading a pin to indicates the robot state (either in path recoignition and maze solving mode)
+
 void setup() {
 
   //setup the enable pins for motor 1 & 2
@@ -21,6 +23,12 @@ void setup() {
   setupLCDModule();
 
   clearLCDModule();
+
+  //set a pin as INPUT mode
+  pinMode(InterruptPin,INPUT);
+
+  //let the arduino to detect the rising edge of the interrupt pin for the mode changing between path recoignition or maze competition
+  attachInterrupt(digitalPinToInterrupt(InterruptPin),modeChanging,RISING);
 }
 
 //minimum front distance where the robot should stop
@@ -54,11 +62,21 @@ void loop() {
   //get the sum of left and right distance
   byte totalLeftRightDistance = leftDistance + rightDistance;
 
+  //indicator where the robot is in path searching mode
+  if(isInSearchingMode){
+    
+  }
+
   if(abs(totalLeftRightDistance - LEFTRIGHTDISTANCE) <= 3){
     if(isAtPotentialEndingPoint){
       isEndingPoint = true;
-      finalSequences = tempBranches;
       isAtPotentialEndingPoint = false;
+
+      //reset the EEPROM memory before storing the information
+      // memoryReset();
+
+      //put in the function of saving the string variable into the EEPROM
+      //memoryWrite(tempBranches);
     }else{
       isAtPotentialEndingPoint = true;
     }
@@ -75,9 +93,11 @@ void loop() {
           moveForward();
         }
       }else{
+        //not confirm if it works for the particular line
         if(tempBranches.length() != transitionPoint.length()){
           if(tempBranches[tempBranches.length()-1] == 'L'){
             if(frontDistance > MINFRONTALLOWDISTANCE + 10){
+              //still not confirm wherether the transitionPoint works fine
               transitionPoint = tempBranches;
               tempBranches[tempBranches.length() - 1] = 'R';
               moveForward();
@@ -88,6 +108,7 @@ void loop() {
                   turnLeft();
                   delay(5);
                 }
+                tempBranches[tempBranches.length() - 1] = 'F';
                 isReturning = false;
               }else{
                 if(rightDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
@@ -95,11 +116,11 @@ void loop() {
                     turnRight();
                     delay(5);
                   }
-                isReturning = true;
+                  tempBranches.remove(tempBranches.length()-1);
+                  clearLCDModule();
+                  isReturning = true;
                 }
               }
-              tempBranches.remove(tempBranches.length()-1);
-              clearLCDModule();
             }
           }else if(tempBranches[tempBranches.length()-1] == 'R'){
             if(frontDistance > MINFRONTALLOWDISTANCE + 10){
@@ -113,6 +134,8 @@ void loop() {
                   turnLeft();
                   delay(5);
                 }
+                tempBranches.remove(tempBranches.length()-1);
+                clearLCDModule();
                 isReturning = true;
               }else{
                 if(rightDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
@@ -120,51 +143,54 @@ void loop() {
                     turnRight();
                     delay(5);
                   }
-                isReturning = false;
+                  tempBranches[tempBranches.length() - 1] = 'F';
+                  isReturning = false;
                 }
               }
-              tempBranches.remove(tempBranches.length()-1);
-              clearLCDModule();
             }
           }
         }else{
+          //indicates that it already go for left side
           if(transitionPoint[transitionPoint.length()-1] == 'L'){
             if(rightDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
                 while(getDistance(getDuration(rightTrig,rightEcho)) > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
                   turnRight();
                   delay(5);
                 }
+              tempBranches[tempBranches.length() - 1] = 'F';
               isReturning = false;
             }else{
               while(getDistance(getDuration(leftTrig,leftEcho)) > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
                 turnLeft();
                 delay(5);
               }
+              tempBranches.remove(tempBranches.length()-1);
+              clearLCDModule();
               isReturning = true;
             }
-            tempBranches.remove(tempBranches.length()-1);
-            clearLCDModule();
           }else if(transitionPoint[transitionPoint.length()-1] == 'R'){
             if(rightDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
               while(getDistance(getDuration(rightTrig,rightEcho)) > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
                 turnRight();
                 delay(5);
               }
+              tempBranches.remove(tempBranches.length()-1);
+              clearLCDModule();
               isReturning = true;
             }else{
               while(getDistance(getDuration(leftTrig,leftEcho)) > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
                 turnLeft();
                 delay(5);
               }
+              tempBranches[tempBranches.length() - 1] = 'F';
               isReturning = false;
             }
-            tempBranches.remove(tempBranches.length()-1);
-            clearLCDModule();
           }
         } 
       }
     }else{
-      if(frontDistance > MINFRONTALLOWDISTANCE){
+      //just changed here
+      if(frontDistance > MINFRONTALLOWDISTANCE || tempBranches[tempBranches.length()-1] == 'F'){
         if(totalLeftRightDistance > MINLEFTRIGHTALLOWDISTANCE){
 
           if(leftDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
