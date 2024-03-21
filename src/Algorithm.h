@@ -6,8 +6,11 @@ bool isReturning = false;
 
 String transitionPoint = "";
 
+bool isAtPotentialEndingPoint = false;
 
+String finalSequences = "";
 
+bool isEndingPoint = false;
 
 
 
