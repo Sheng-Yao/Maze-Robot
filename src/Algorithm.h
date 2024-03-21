@@ -88,31 +88,3 @@ String transitionPoint = "";
 // };
 
 // //to delete the class instance ==> using delete object instance;
-
-
-// bool isReturning = false;
-// bool isBranching = false;
-// bool isRemainingWays = false;
-
-// byte currentSubBranching = 0;
-
-// String subBranch1 = "";
-// String subBranch2 = "";
-// String subBranch3 = "";
-
-// char desiredDirection;
-
-// Branch overallPath[10][10] = {};
-
-// byte numberOfSubBranch = 0;
-
-
-
-// //#######   Class definition about the branches in the maze #######//
-// byte currentNumber = 0;
-// byte currentLevel = 0;
-
-// //indicator when find the end point
-// bool isEndPoint = false;
-
-// bool isBranchCalculated = false;
