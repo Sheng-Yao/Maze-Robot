@@ -123,12 +123,12 @@ void loop() {
 
     }else{
       stop();
-      while(1);
+      delay(10);
+      uTurn();
+      stop();
+      delay(10);
     }
   }
-
-
-
 
 
 

@@ -36,20 +36,20 @@ void moveForward(){
     digitalWrite(motor2B,HIGH);
 }
 
-void turnRight(){
+void turnLeft(){
     //values for analogWrite is 0 ~ 255
 
-    //let left motor slow and right motor fast
-    analogWrite(enableMotor1,0);
-    analogWrite(enableMotor2,changeDirectionSpeed);
+    //let right motor slow and left motor fast
+    analogWrite(enableMotor1,changeDirectionSpeed);
+    analogWrite(enableMotor2,0);
 
     //motor 1 moving forward
-    digitalWrite(motor1A,HIGH);
-    digitalWrite(motor1B,LOW);
+    digitalWrite(motor1A,LOW);
+    digitalWrite(motor1B,HIGH);
 
     //motor 2 moving forward
-    digitalWrite(motor2A,HIGH);
-    digitalWrite(motor2B,LOW);
+    digitalWrite(motor2A,LOW);
+    digitalWrite(motor2B,HIGH);
 }
 
 void alignLeft(){
@@ -68,20 +68,20 @@ void alignLeft(){
     digitalWrite(motor2B,HIGH);
 }
 
-void turnLeft(){
+void turnRight(){
     //values for analogWrite is 0 ~ 255
 
-    //let right motor slow and left motor fast
-    analogWrite(enableMotor1,changeDirectionSpeed);
-    analogWrite(enableMotor2,0);
+    //let left motor slow and right motor fast
+    analogWrite(enableMotor1,0);
+    analogWrite(enableMotor2,changeDirectionSpeed);
 
     //motor 1 moving forward
-    digitalWrite(motor1A,LOW);
-    digitalWrite(motor1B,HIGH);
+    digitalWrite(motor1A,HIGH);
+    digitalWrite(motor1B,LOW);
 
     //motor 2 moving forward
-    digitalWrite(motor2A,LOW);
-    digitalWrite(motor2B,HIGH);
+    digitalWrite(motor2A,HIGH);
+    digitalWrite(motor2B,LOW);
 }
 
 void alignRight(){
@@ -116,21 +116,18 @@ void stop(){
     digitalWrite(motor2B,LOW);
 }
 
-// void uTurn(){
-//     //values for analogWrite is 0 ~ 255
+void uTurn(){
+    //let right motor slow and left motor fast
+    analogWrite(enableMotor1,motor1Speed);
+    analogWrite(enableMotor2,motor2Speed);
 
-//     //let both motor stop
-//     analogWrite(enableMotor1,motor1Speed);
-//     analogWrite(enableMotor2,motor2Speed);
+    //motor 1 moving forward
+    digitalWrite(motor1A,LOW);
+    digitalWrite(motor1B,HIGH);
 
-//     //motor 1 stop
-//     digitalWrite(motor1A,HIGH);
-//     digitalWrite(motor1B,LOW);
+    //motor 2 moving forward
+    digitalWrite(motor2A,LOW);
+    digitalWrite(motor2B,HIGH);
 
-//     //motor 2 stop
-//     digitalWrite(motor2A,LOW);
-//     digitalWrite(motor2B,HIGH);
-
-//     //set the delay besed on requirement
-//     delay(500);
-// }
+    delay(2500);
+}
