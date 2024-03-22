@@ -13,16 +13,10 @@ bool isAtPotentialEndingPoint = false;
 
 bool isEndingPoint = false;
 
-bool isInSearchingMode = false;
+bool isInSearchingMode = true;
 
-void modeChanging(){
-    if(isInSearchingMode){
-        isInSearchingMode = false;
-    }else{
-        isInSearchingMode = true;
-    }
+String overallPath = "";
 
-}
 
 
 

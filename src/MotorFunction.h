@@ -15,26 +15,15 @@
 #define motor2A 6
 #define motor2B 7
 
-//ultrasonics sensors TRIG and ECHO pins
-//define pins for left ultrasonic sensor
-#define leftTrig 8
-#define leftEcho 9
-
-//define pins for front ultrasonic sensor
-#define frontTrig 10
-#define frontEcho 11
-
-//define pins for right ultrasonic sensor
-#define rightTrig 12
-#define rightEcho 13
-
+const byte fastSpeed = 255;
+const byte lowSpeed = 150;
 
 void moveForward(){
     //values for analogWrite is 0 ~ 255
 
     //let both motor runs at full speed
-    analogWrite(enableMotor1,255);
-    analogWrite(enableMotor2,255);
+    analogWrite(enableMotor1,lowSpeed);
+    analogWrite(enableMotor2,lowSpeed);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
@@ -49,8 +38,8 @@ void turnLeft(){
     //values for analogWrite is 0 ~ 255
 
     //let left motor slow and right motor fast
-    analogWrite(enableMotor1,100);
-    analogWrite(enableMotor2,255);
+    analogWrite(enableMotor1,50);
+    analogWrite(enableMotor2,lowSpeed);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
@@ -65,8 +54,8 @@ void alignLeft(){
     //values for analogWrite is 0 ~ 255
 
     //let left motor slow and right motor fast
-    analogWrite(enableMotor1,200);
-    analogWrite(enableMotor2,255);
+    analogWrite(enableMotor1,125);
+    analogWrite(enableMotor2,lowSpeed);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
@@ -81,8 +70,8 @@ void turnRight(){
     //values for analogWrite is 0 ~ 255
 
     //let right motor slow and left motor fast
-    analogWrite(enableMotor1,255);
-    analogWrite(enableMotor2,100);
+    analogWrite(enableMotor1,lowSpeed);
+    analogWrite(enableMotor2,50);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
@@ -97,8 +86,8 @@ void alignRight(){
     //values for analogWrite is 0 ~ 255
 
     //let right motor slow and left motor fast
-    analogWrite(enableMotor1,255);
-    analogWrite(enableMotor2,200);
+    analogWrite(enableMotor1,lowSpeed);
+    analogWrite(enableMotor2,125);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
@@ -129,8 +118,8 @@ void uTurn(){
     //values for analogWrite is 0 ~ 255
 
     //let both motor stop
-    analogWrite(enableMotor1,255);
-    analogWrite(enableMotor2,255);
+    analogWrite(enableMotor1,lowSpeed);
+    analogWrite(enableMotor2,lowSpeed);
 
     //motor 1 stop
     digitalWrite(motor1A,HIGH);
