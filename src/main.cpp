@@ -1,7 +1,6 @@
 #include "MotorFunction.h"
 #include "UltrasonicFunction.h"
 #include "Algorithm.h"
-#include "I2C_LCDFunction.h"
 #include "EEPROMFunction.h"
 
 //current plan is by reading a pin to indicates the robot state (either in path recoignition and maze solving mode)
@@ -44,10 +43,6 @@ void setup() {
   pinMode(motor2A,OUTPUT);
   pinMode(motor2B,OUTPUT);
 
-  // setupLCDModule();
-
-  // clearLCDModule();
-
   // set a pin as INPUT mode
   pinMode(InterruptPin,INPUT);
 
@@ -58,25 +53,19 @@ void setup() {
 //minimum front distance where the robot should stop
 const double MINFRONTALLOWDISTANCE = 150;
 
-//left = 85
-//right = 75
 //minimum for the sum of left and right distance
 const double MINLEFTRIGHTALLOWDISTANCE = 200;
 
 //benchmark to indicate the side that have branches
-const double LEFTRIGHTBRANCHBENCHMARKDISTANCE = 90;
+const double LEFTRIGHTBRANCHBENCHMARKDISTANCE = 95;
 
 //ending block distance
 const double LEFTRIGHTDISTANCE = 250;
 
-
 //distance between left and right to trigger the alignment process
-const double ALIGNMENTDISTANCEBENCHMARK = 30;
+const double ALIGNMENTDISTANCEBENCHMARK = 20;
 
 void loop() {
-
-  // printLCDModule(tempBranches,0,0);
-  // printLCDModule(String(isEndingPoint),0,1);
 
   //initialize distance local variables
   double leftDistance = -1;
@@ -88,46 +77,55 @@ void loop() {
   frontDistance = getDistance(getDuration(frontTrig,frontEcho));
   rightDistance = getDistance(getDuration(rightTrig,rightEcho));
 
-  // clearLCDModule();
-  // printLCDModule("Left:",0,0);
-  // printLCDModule(String(leftDistance),6,0);
-  // printLCDModule("Right:",0,1);
-  // printLCDModule(String(rightDistance),7,1);
-
-  // Serial.println(frontDistance);
-
-  //get the sum of left and right distance
-  double totalLeftRightDistance = leftDistance + rightDistance;
-
-  if(frontDistance > MINFRONTALLOWDISTANCE){
-    if(leftDistance - rightDistance > ALIGNMENTDISTANCEBENCHMARK){
-      alignLeft();
-    }else if(rightDistance - leftDistance > ALIGNMENTDISTANCEBENCHMARK){
-      alignRight();
-    }else{
+  if(leftDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
+    stop();
+    delay(10);
+    moveForward();
+    delay(5);
+    tempBranches += "L";
+    while(getDistance(getDuration(leftTrig,leftEcho)) > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
+      turnLeft();
+      delay(125);
+      stop();
+      delay(5);
       moveForward();
+      delay(150);
     }
-    delay(2);
+  }else if(rightDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
+    stop();
+    delay(10);
+    moveForward();
+    delay(5);
+    tempBranches += "R";
+    while(getDistance(getDuration(rightTrig,rightEcho)) > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
+      turnRight();
+      delay(125);
+      stop();
+      delay(5);
+      moveForward();
+      delay(150);
+    }
+
   }else{
-    if(totalLeftRightDistance > MINLEFTRIGHTALLOWDISTANCE){
-      moveForward();
-      delay(25);
-      if(leftDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
-        tempBranches += "L";
-        turnLeft();
-        delay(650);
-      }else if(rightDistance > LEFTRIGHTBRANCHBENCHMARKDISTANCE){
-        tempBranches += "R";
-        turnRight();
-        delay(650);
+    if(frontDistance > MINFRONTALLOWDISTANCE){
+      if(abs(leftDistance - rightDistance) > ALIGNMENTDISTANCEBENCHMARK){
+        if(leftDistance - rightDistance > ALIGNMENTDISTANCEBENCHMARK*0.5){
+          alignLeft();
+          delay(10);
+        }else if(rightDistance - leftDistance > ALIGNMENTDISTANCEBENCHMARK*0.5){
+          alignRight();
+          delay(10);
+        }
+      }else{
+        moveForward();
+        delay(10);
       }
-      moveForward();
-      delay(100);
+
     }else{
       stop();
+      while(1);
     }
   }
-
 
 
 

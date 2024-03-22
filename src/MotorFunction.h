@@ -15,8 +15,10 @@
 #define motor2A 6
 #define motor2B 7
 
-const byte motor1Speed = 110;
-const byte motor2Speed = 140;
+const byte motor1Speed = 70;
+const byte motor2Speed = 82;
+
+const byte changeDirectionSpeed = 125;
 
 void moveForward(){
     //values for analogWrite is 0 ~ 255
@@ -38,8 +40,8 @@ void turnRight(){
     //values for analogWrite is 0 ~ 255
 
     //let left motor slow and right motor fast
-    analogWrite(enableMotor1,motor1Speed);
-    analogWrite(enableMotor2,motor1Speed/2);
+    analogWrite(enableMotor1,0);
+    analogWrite(enableMotor2,changeDirectionSpeed);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
@@ -54,7 +56,7 @@ void alignLeft(){
     //values for analogWrite is 0 ~ 255
 
     //let left motor slow and right motor fast
-    analogWrite(enableMotor1,motor1Speed-30);
+    analogWrite(enableMotor1,motor1Speed+20);
     analogWrite(enableMotor2,motor2Speed);
 
     //motor 1 moving forward
@@ -70,8 +72,8 @@ void turnLeft(){
     //values for analogWrite is 0 ~ 255
 
     //let right motor slow and left motor fast
-    analogWrite(enableMotor1,motor1Speed/2);
-    analogWrite(enableMotor2,motor1Speed);
+    analogWrite(enableMotor1,changeDirectionSpeed);
+    analogWrite(enableMotor2,0);
 
     //motor 1 moving forward
     digitalWrite(motor1A,LOW);
@@ -86,8 +88,8 @@ void alignRight(){
     //values for analogWrite is 0 ~ 255
 
     //let right motor slow and left motor fast
-    analogWrite(enableMotor1,motor1Speed);
-    analogWrite(enableMotor2,motor2Speed-30);
+    analogWrite(enableMotor1,motor1Speed-20);
+    analogWrite(enableMotor2,motor2Speed);
 
     //motor 1 moving forward
     digitalWrite(motor1A,HIGH);
