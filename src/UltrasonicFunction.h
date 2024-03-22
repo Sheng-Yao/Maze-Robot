@@ -30,5 +30,5 @@ double getDistance(long input){
     //At 30'C, 349.02
     //At 25'C, 346.13
     //At 20'C, 343.21
-    return input * 0.31613 / 2;
+    return input * 0.34613 / 2;
 }
