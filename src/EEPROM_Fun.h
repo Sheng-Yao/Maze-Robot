@@ -3,12 +3,8 @@
 
 
 void memoryReset(){
-    for(int i = 0; i < 255; i++){
-        if(EEPROM.read(i) == ' '){
-            continue;
-        }else{
-            EEPROM.write(i, ' ');
-        }
+    for(int i = 0; i < EEPROM.length(); i++){
+        EEPROM.write(i, 0);
     }
 }
 
@@ -20,8 +16,8 @@ void memoryWrite(String input){
 
 String memoryRead(){
     String buffer = "";
-    for(int i = 0; i < 255; i++){
-        if(EEPROM.read(i) != ' '){
+    for(int i = 0; i < EEPROM.length(); i++){
+        if(EEPROM.read(i) != 0){
             buffer += EEPROM.read(i);
         }else{
             break;
