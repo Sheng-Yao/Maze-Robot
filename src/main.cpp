@@ -1,6 +1,5 @@
 #include <Encoder.h>
 #include <Motor.h>
-#include <MPU6050.h>
 #include <Ultrasonic.h>
 
 void setup(){
@@ -23,6 +22,10 @@ void setup(){
 
 bool isMoving = false;
 bool isReachPoint = false;
+
+float distance[3] = {0,0,0};
+
+const byte mazeWidth = 20;
 
 void loop(){
 
@@ -47,6 +50,7 @@ void loop(){
       stop();
       isMoving = false;
       isReachPoint = true;
+      paused = true;
     }
   }else{
     if(getMovingDistance() < 25){
@@ -55,32 +59,78 @@ void loop(){
     }
   }
 
+  update();
+ 
+  static int count;
+  static int countStraight;
+  if (count < 6){  
+    count ++;
+  } else { //runs once after void loop() runs 7 times. void loop runs about every 2.8ms, so this else condition runs every 19.6ms or 50 times/second
+    count = 0;
+    if (!paused){
+      if (isDriving != prevIsDriving){
+        leftSpeedVal = equilibriumSpeed;
+        countStraight = 0;
+      }
+      if (isDriving) {
+        if (abs(targetAngle - angle) < 3){
+          if (countStraight < 20){
+            countStraight ++;
+          } else {
+            countStraight = 0;
+            equilibriumSpeed = leftSpeedVal; //to find equilibrium speed, 20 consecutive readings need to indicate car is going straight
+          }
+        } else {
+          countStraight = 0;
+        }
+        driving();
+      } else {
+        rotate();
+      }
+      prevIsDriving = isDriving;
+    }
+  } 
 
   if(isReachPoint){
-    Serial.println("Distance (Left): " + String(getDistance(leftTrig,leftEcho)));
+
+    distance[0] = getDistance(leftTrig,leftEcho);
+    distance[1] = getDistance(rightTrig,rightEcho);
+    distance[2] = getDistance(frontTrig,frontEcho);
+
+    Serial.println("Distance (Left): " + String(distance[0]));
 
     delay(5);
 
-    Serial.println("Distance (Right): " + String(getDistance(rightTrig,rightEcho)));
+    Serial.println("Distance (Right): " + String(distance[1]));
 
     delay(5);
 
-    Serial.println("Distance (Front): " + String(getDistance(frontTrig,frontEcho)));
+    Serial.println("Distance (Front): " + String(distance[2]));
 
     isReachPoint = false;
 
-    turnRight();
-    unsigned long lastTime = millis();
-    while(true){
-      if(getOrientation()){
-        if(gyroOutputBuffer * (millis()-lastTime)/1000.0 >= 90){
-          stop();
-          break;
-        }else{
-          continue;
-        }
-      }
+    if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
+      uTurn();
+    }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
+      turnLeft();
+    }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
+      turnRight();
+    }else if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
+      moveForward();
+    }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
+      Serial.println("Left and Right branches");
+      turnLeft();
+    }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
+      Serial.println("Left and front branches");
+      turnLeft();
+    }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
+      Serial.println("Right and front branches");
+      turnRight();
+    }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
+      Serial.println("Left, Right and front branches");
+      turnLeft(); // Possible reach the end point need to add in with end point validation
     }
+    paused = false;
   }
 
 }

@@ -1,9 +1,7 @@
 #include <Arduino.h>
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
 #include <Wire.h>
 
-Adafruit_MPU6050 mpu;
+const int MPU = 0x68; // MPU6050 I2C address
 
 // Pin connection
 // VCC -> 3.3 V / 5 V (better) 
@@ -11,60 +9,84 @@ Adafruit_MPU6050 mpu;
 // SCL -> A5 
 // SDA -> A4 
 
-void mpuSetup(){
-  
-  if (!mpu.begin()) {
-    Serial.println("Failed to find MPU6050 chip");
-    while (1) {
-      delay(10);
-    }
-  }
-  
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  
-  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
-
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-}
-
-float accelOutputBuffer[2]={0,0};
-
-bool getPosition() {
-
-    // Reset variable holder for X, Y
-    accelOutputBuffer[0] = 0;
-    accelOutputBuffer[1] = 0;
-
-    /* Get new sensor events with the readings */
-    sensors_event_t accel_value, gyro_value, temp;
-    mpu.getEvent(&accel_value, &gyro_value, &temp);
-
-    accelOutputBuffer[0] = accel_value.acceleration.x;
-    accelOutputBuffer[1] = accel_value.acceleration.y;
-
-    if(accelOutputBuffer[0] != 0 && accelOutputBuffer[1] != 0){
-        return true;
-    }else{
-        return false;
-    }
-}
-
+float AccErrorX, AccErrorY, GyroErrorZ;
+float accelOutputBuffer[3]={0,0,0};
 float gyroOutputBuffer = 0;
 
-bool getOrientation(){
+bool getPosition() {
+  accelOutputBuffer[0] = 0;
+  accelOutputBuffer[1] = 0;
+  accelOutputBuffer[2] = 0;
 
-    // Reset variable holder for X, Y
-    gyroOutputBuffer = 0;
+  Wire.beginTransmission(MPU);
+  Wire.write(0x3B); // Start with register 0x3B (ACCEL_XOUT_H)
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 6, true); // Read 6 registers total, each axis value is stored in 2 registers
+  //For a range of +-2g, we need to divide the raw values by 16384, according to the MPU6050 datasheet
+  accelOutputBuffer[0] = (Wire.read() << 8 | Wire.read()) / 16384.0; // X-axis value
+  accelOutputBuffer[1] = (Wire.read() << 8 | Wire.read()) / 16384.0; // Y-axis value
+  accelOutputBuffer[2] = (Wire.read() << 8 | Wire.read()) / 16384.0; // Y-axis value
 
-    /* Get new sensor events with the readings */
-    sensors_event_t accel_value, gyro_value, temp;
-    mpu.getEvent(&accel_value, &gyro_value, &temp);
-
-    gyroOutputBuffer = gyro_value.gyro.z * 57.29577793F;
-
-    if(gyroOutputBuffer != 0){
-        return true;
-    }else{
-        return false;
-    }
+  if(accelOutputBuffer[0] != 0 && accelOutputBuffer[1] != 0 && accelOutputBuffer[2] != 0){
+      return true;
+  }else{
+      return false;
+  }
 }
+
+bool getOrientation(){
+  // Reset variable holder for X, Y
+  gyroOutputBuffer = 0;
+
+  Wire.beginTransmission(MPU);
+  Wire.write(0x43);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 6, true);
+  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;
+  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;
+  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;  // get z rotation (yaw)
+
+  if(gyroOutputBuffer != 0){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+void calculateError() {
+  // Read accelerometer values 200 times
+  byte c = 0;
+  while (c < 200) {
+    if(getPosition()){
+      AccErrorX += (atan((accelOutputBuffer[1]) / sqrt(pow((accelOutputBuffer[0]), 2) + pow((accelOutputBuffer[2]), 2))) * 180 / PI);
+      AccErrorY += (atan(-1 * (accelOutputBuffer[0]) / sqrt(pow((accelOutputBuffer[1]), 2) + pow((accelOutputBuffer[2]), 2))) * 180 / PI);
+      c++;
+    }
+  }
+  //Divide the sum by 200 to get the error value, since expected value of reading is zero
+  AccErrorX = AccErrorX / 200;
+  AccErrorY = AccErrorY / 200;
+  c = 0;
+  
+  // Read gyro values 200 times
+  while (c < 200) {
+    if(getOrientation()){
+      GyroErrorZ += gyroOutputBuffer;
+      c++;
+    }
+  }
+  //Divide the sum by 200 to get the error value
+  GyroErrorZ = GyroErrorZ / 200;
+  Serial.println("The the gryoscope setting in MPU6050 has been calibrated");
+}
+
+void mpuSetup(){
+  Wire.begin();                      // Initialize comunication
+  Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
+  Wire.write(0x6B);                  // Talk to the register 6B
+  Wire.write(0x00);                  // Make reset - place a 0 into the 6B register
+  Wire.endTransmission(true);        //end the transmission
+  // Call this function if you need to get the IMU error values for your module
+  calculateError();
+}
+
