@@ -24,49 +24,97 @@ bool isReachPoint = false;
 
 float distance[3] = {0,0,0};
 
-const byte mazeWidth = 10;
+const byte mazeWidth = 15;
 
 unsigned long current = millis();
 
 void loop(){
-
   if(getDistance(frontTrig,frontEcho) > 5){
     if(!isMoving){
-      moveForward();
-      isMoving = true;
-      resetDistance();
-    }
+      if(isTurnLeft || isTurnRight || isUTurn){
+        if(isTurnRight){
+          turnRight();
+          while(true){
+            update();
+            if(isTurnRight){
+              if(abs(angle) < targetAngle){
+                continue;
+              }else{
+                moveForward();
+                resetDistance();
+                detachInterrupt(digitalPinToInterrupt(encoderPinA));
+                detachInterrupt(digitalPinToInterrupt(encoderPinB));
+                attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
+                attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+                while(true){
+                  float result = getMovingDistance();
+                  Serial.println(result);
+                  if(result < 25){
+                    continue;
+                  }else{
+                    stop();
+                    break;
+                  }
+                }
+                isReachPoint = true;
+                isTurnRight = false;
+                break;
+              }
+            }
+          }
+          delay(5000);
+        }
 
-    if(getMovingDistance() >= 24){
-      stop();
-      isMoving = false;
-      isReachPoint = true;
+      }else{
+        moveForward();
+        isMoving = true;
+        resetDistance();
+      }
     }else{
-      // Moving forward + Align
-      if(millis() - current > 75){
-        distance[0] = getDistance(leftTrig,leftEcho);
-        distance[1] = getDistance(rightTrig,rightEcho);
-        float distanceDifference = distance[0] - distance[1];
-        if(distanceDifference <= -2.5){
-          detachInterrupt(digitalPinToInterrupt(encoderPinA));
-          detachInterrupt(digitalPinToInterrupt(encoderPinB));
-          leftSpeedVal = equilibriumSpeed;
-          rightSpeedVal = equilibriumSpeed;
-          alignRight();
+      float ultrasonicResult = getDistance(frontTrig,frontEcho);
+      if((getMovingDistance() >= 25) && (round(ultrasonicResult) % 25 <= 3 || ultrasonicResult <= 7)){
+        stop();
+        isMoving = false;
+        isReachPoint = true;
+      }else{
+        // Moving forward + Align
+        if(millis() - current > 75){
+          distance[0] = getDistance(leftTrig,leftEcho);
+          distance[1] = getDistance(rightTrig,rightEcho);
+          float distanceDifference = distance[0] - distance[1];
+          if(distanceDifference <= -2.5){
+            if(distanceDifference <= -15.0){
+              if(distance[0] < 5.5){
+                alignRight();
+              }else if(distance[0] > 7){
+                alignLeft();
+              }else{
+                moveForward();
+              }
+            }else{
+              alignRight();
+            }
+
+          }else if(distanceDifference >= 2.5){
+            if(distanceDifference >= 15.0){
+              if(distance[1] < 5.5){
+                alignLeft();
+              }else if(distance[1] > 7){
+                alignRight();
+              }else{
+                moveForward();
+              }
+            }else{
+              alignLeft();
+            }
+          }
+          else{
+            attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
+            attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+            moveForward();
+          }
+          current = millis();
         }
-        else if(distanceDifference >= 2.5){
-          detachInterrupt(digitalPinToInterrupt(encoderPinA));
-          detachInterrupt(digitalPinToInterrupt(encoderPinB));
-          leftSpeedVal = equilibriumSpeed;
-          rightSpeedVal = equilibriumSpeed;
-          alignLeft();
-        }
-        else{
-          attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
-          attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
-          moveForward();
-        }
-        current = millis();
       }
     }
   }else{
@@ -76,70 +124,6 @@ void loop(){
     stop();
     while(1){;}
   }
-
-  // Serial.println(String(getMovingDistance()));
-
-  // if(isMoving){
-    
-  //   if(getPosition()){
-  //     Serial.println("X: " + String(accelOutputBuffer[0]));
-  //     Serial.println("Y: " + String(accelOutputBuffer[1]));
-  //     Serial.println();
-  //   }else{
-  //     Serial.println("Can't get position data");
-  //   }
-
-  //   if(getOrientation()){
-  //     Serial.println("Rotation: " + String(gyroOutputBuffer));
-  //     Serial.println();
-  //   }else{
-  //     Serial.println("Can't get orientation data");
-  //   }
-
-  //   if(getMovingDistance() >= 25){
-  //     stop();
-  //     isMoving = false;
-  //     isReachPoint = true;
-  //     paused = true;
-  //   }
-  // }else{
-  //   if(getMovingDistance() < 25){
-  //     moveForward();
-  //     isMoving = true;
-  //   }
-  // }
-
-  // update();
- 
-  // static int count;
-  // static int countStraight;
-  // if (count < 6){  
-  //   count ++;
-  // } else { //runs once after void loop() runs 7 times. void loop runs about every 2.8ms, so this else condition runs every 19.6ms or 50 times/second
-  //   count = 0;
-  //   if (!paused){
-  //     if (isDriving != prevIsDriving){
-  //       leftSpeedVal = equilibriumSpeed;
-  //       countStraight = 0;
-  //     }
-  //     if (isDriving) {
-  //       if (abs(targetAngle - angle) < 3){
-  //         if (countStraight < 20){
-  //           countStraight ++;
-  //         } else {
-  //           countStraight = 0;
-  //           equilibriumSpeed = leftSpeedVal; //to find equilibrium speed, 20 consecutive readings need to indicate car is going straight
-  //         }
-  //       } else {
-  //         countStraight = 0;
-  //       }
-  //       driving();
-  //     } else {
-  //       rotate();
-  //     }
-  //     prevIsDriving = isDriving;
-  //   }
-  // } 
 
   if(isReachPoint){
 
@@ -159,22 +143,50 @@ void loop(){
 
     if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
       Serial.println("Dead End");
-      // uTurn();
+      isUTurn = true;
+      isTurnLeft = false;
+      isTurnRight = false;
     }else if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
       Serial.println("Front");
-      // uTurn();
+      isTurnLeft = false;
+      isTurnRight = false;
+      isUTurn = false;
     }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
       Serial.println("Left branch");
-      // turnLeft();
+      moveForward();
+      while(true){
+        if(getDistance(frontTrig,frontEcho) < 7){
+          stop();
+          break;
+        }else{
+          delay(50);
+          continue;
+        }
+      }
+      isTurnLeft = true;
+      isTurnRight = false;
+      isUTurn = false;
     }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
       Serial.println("Right branch");
-      // turnRight();
+      moveForward();
+      while(true){
+        if(getDistance(frontTrig,frontEcho) < 7){
+          stop();
+          break;
+        }else{
+          delay(50);
+          continue;
+        }
+      }
+      isTurnRight = true;
+      isTurnLeft = false;
+      isUTurn = false;
     }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
       Serial.println("Left and Right branches");
-      // turnLeft();
+      //
     }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
       Serial.println("Left and front branches");
-      // turnLeft();
+      //
     }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
       Serial.println("Right and front branches");
       // turnRight();
@@ -186,25 +198,7 @@ void loop(){
     isReachPoint = false;
 
     delay(5000);
+
+    currentTime = millis();
   }
-
-  // distance[0] = getDistance(leftTrig,leftEcho);
-  // distance[1] = getDistance(rightTrig,rightEcho);
-
-  // Serial.println("Left: " + String(distance[0]));
-  // Serial.println("Right: " + String(distance[1]));
-
-  // if(getPosition()){
-  //   Serial.println("X Position: " + String(accelOutputBuffer[0]));
-  //   Serial.println("Y Position: " + String(accelOutputBuffer[1]));
-  //   Serial.println("Z Position: " + String(accelOutputBuffer[2]));
-  // }
-
-  // update();
-
-  // if(getOrientation()){
-  //   Serial.println("Z Rotation angle: " + String(angle));
-  // }
-
-  // delay(200);
 }

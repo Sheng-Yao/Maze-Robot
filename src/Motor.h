@@ -88,138 +88,71 @@ void moveForward(){
 }
 
 void alignLeft(){
+    detachInterrupt(digitalPinToInterrupt(encoderPinA));
+    detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    leftSpeedVal = equilibriumSpeed;
+    rightSpeedVal = equilibriumSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
     goForwardMotor1();
-    goBackwardMotor2();
+    resetMotor2();
+    // goBackwardMotor2();
 }
 
 void alignRight(){
+    detachInterrupt(digitalPinToInterrupt(encoderPinA));
+    detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    leftSpeedVal = equilibriumSpeed;
+    rightSpeedVal = equilibriumSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
-    goBackwardMotor1();
+    resetMotor1();
+    //goBackwardMotor1();
     goForwardMotor2();
 }
 
-void turnLeft(){
-    analogWrite(motor1Speed,maxSpeed);
-    analogWrite(motor2Speed,maxSpeed);
-    goBackwardMotor1();
-    goForwardMotor2();
-    // targetAngle += 90;
-    // if (targetAngle > 180){
-    //     targetAngle -= 360;
-    // }
-    // isDriving = false;
-}
+bool isTurnLeft = false;
+bool isTurnRight = false;
+bool isUTurn = false;
+
+// void turnLeft(){
+//     analogWrite(motor1Speed,maxSpeed);
+//     analogWrite(motor2Speed,maxSpeed);
+//     goBackwardMotor1();
+//     goForwardMotor2();
+//     // targetAngle += 90;
+//     // if (targetAngle > 180){
+//     //     targetAngle -= 360;
+//     // }
+//     // isDriving = false;
+// }
 
 void turnRight(){
-    analogWrite(motor1Speed,maxSpeed);
-    analogWrite(motor2Speed,maxSpeed);
-    goForwardMotor1();
-    goBackwardMotor2();
-    // targetAngle -= 90;
-    // if (targetAngle <= -180){
-    //     targetAngle += 360;
-    // }
-    // isDriving = false;
-}
-
-void uTurn(){
-    analogWrite(motor1Speed,maxSpeed);
-    analogWrite(motor2Speed,maxSpeed);
+    analogWrite(motor1Speed,equilibriumSpeed);
+    analogWrite(motor2Speed,equilibriumSpeed);
     goBackwardMotor1();
     goForwardMotor2();
-    // targetAngle += 180;
-    // if (targetAngle > 360){
-    //     targetAngle -= 360;
-    // }
-    // isDriving = false;
+    targetAngle = 90;
 }
+
+// void uTurn(){
+//     analogWrite(motor1Speed,maxSpeed);
+//     analogWrite(motor2Speed,maxSpeed);
+//     goBackwardMotor1();
+//     goForwardMotor2();
+//     // targetAngle += 180;
+//     // if (targetAngle > 360){
+//     //     targetAngle -= 360;
+//     // }
+//     // isDriving = false;
+// }
 
 void stop(){
     analogWrite(motor1Speed,equilibriumSpeed);
     analogWrite(motor2Speed,equilibriumSpeed);
     resetMotor1();
     resetMotor2();
-    // isDriving = false;
 }
-
-// int changeSpeed (int motorSpeed, int increment){
-//   motorSpeed += increment;
-//   if (motorSpeed > fastSpeed){ //to prevent motorSpeed from exceeding 255, which is a problem when using analogWrite
-//     motorSpeed = fastSpeed;
-//   } else if (motorSpeed < slowSpeed){
-//     motorSpeed = slowSpeed;
-//   }
-//   return motorSpeed;
-// }
-
-
-// void rotate(){//called by void loop(), which isDriving = false
-//     int deltaAngle = round(targetAngle - angle);
-//     int targetGyroZ;
-//     if (abs(deltaAngle) <= 1){
-//         stop();
-//     } else {
-//         if (angle > targetAngle) { //turn left
-//             turnLeft();
-//         } else if (angle < targetAngle) {//turn right
-//             turnRight();
-//         }
-
-//         //setting up propoertional control, see Step 3 on the website
-//         if (abs(deltaAngle) > 30){
-//             targetGyroZ = 60;
-//         } else {
-//             targetGyroZ = 2 * abs(deltaAngle);
-//         }
-        
-//         if (round(targetGyroZ - abs(gyroOutputBuffer)) == 0){
-//         ;
-//         } else if (targetGyroZ > abs(gyroOutputBuffer)){
-//             leftSpeedVal = changeSpeed(leftSpeedVal, +1); //would increase abs(GyroX)
-//         } else {
-//             leftSpeedVal = changeSpeed(leftSpeedVal, -1);
-//         }
-//         rightSpeedVal = leftSpeedVal;
-//         analogWrite(motor1Speed, leftSpeedVal);
-//         analogWrite(motor2Speed, rightSpeedVal);
-//     }
-// }   
-
-// void controlSpeed(){//this function is called by driving ()
-//     int deltaAngle = round(targetAngle - angle);
-//     int targetGyroZ;
-    
-//     //setting up propoertional control, see Step 3 on the website
-//     if (deltaAngle > 30){
-//         targetGyroZ = 60;
-//     } else if (deltaAngle < -30){
-//         targetGyroZ = -60;
-//     } else {
-//         targetGyroZ = 2 * deltaAngle;
-//     }
-    
-//     if (round(targetGyroZ - gyroOutputBuffer) == 0){
-//         ;
-//     } else if (targetGyroZ > gyroOutputBuffer){
-//         leftSpeedVal = changeSpeed(leftSpeedVal, -1); //would increase GyroX
-//     } else {
-//         leftSpeedVal = changeSpeed(leftSpeedVal, +1);
-//     }
-// }
-
-// void driving(){//called by void loop(), which isDriving = true
-//     int deltaAngle = round(targetAngle - angle); //rounding is neccessary, since you never get exact values in reality
-//     moveForward();
-//     if (deltaAngle != 0){
-//         controlSpeed();
-//         rightSpeedVal = fastSpeed;
-//         analogWrite(motor1Speed, leftSpeedVal);
-//         analogWrite(motor2Speed, rightSpeedVal);
-//     }
-// }
 
 void update(){
     // === Read gyroscope (on the MPU6050) data === //
