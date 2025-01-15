@@ -31,10 +31,10 @@ float getMovingDistance(){
     detachInterrupt(digitalPinToInterrupt(encoderPinA));
     detachInterrupt(digitalPinToInterrupt(encoderPinB));
 
-    float distance = ((pulsesLeft + pulsesRight) / 2) / (float)20 * 3.1416 * (0.068) * 100;
+    float distance = ((pulsesLeft + pulsesRight) / 4) / (float)20 * 3.142 * (0.068) * 100;
 
    //Restart the interrupt processing
-    attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
+    attachInterrupt((encoderPinA), counterLeftUpdate, RISING);
     attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
 
     return distance;
