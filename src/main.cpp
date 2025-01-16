@@ -21,14 +21,14 @@ void setup(){
 
 bool isMoving = false;
 
-float distance[3] = {0,0,0};
 
 const byte mazeWidth = 10;
 
 unsigned long current = millis();
 
+
 void loop(){
-  if(getDistance(FRONT) > 3){
+  if(getDistance(FRONT) > 2){
     if(!isMoving){
       if(isTurnLeft || isTurnRight || isUTurn){
         if(isTurnRight){
@@ -39,29 +39,34 @@ void loop(){
           turnLeft();
           moveForwardAfterTurn();
           isTurnLeft = false;
+        }else if(isUTurn){
+          uTurn();
+          moveForwardAfterTurn();
+          isUTurn = false;
         }
-      }else{
+      }
+      else{
         moveForward();
         isMoving = true;
         resetDistance();
       }
     }else{
       float ultrasonicResult = getDistance(FRONT);
-      if((getMovingDistance() >= 25) && (round(ultrasonicResult) % 23 <= 2 || ultrasonicResult <= 7)){
+      if((getMovingDistance() >= oneBlockSize - 1) && (round(ultrasonicResult) % 24 <= 5 || ultrasonicResult < 7)){
         stop();
         isMoving = false;
         isReachPoint = true;
       }else{
-        // Moving forward + Align
+        //Moving forward + Align
         if(millis() - current > 25){
           distance[0] = getDistance(LEFT);
           distance[1] = getDistance(RIGHT);
           float distanceDifference = distance[0] - distance[1];
-          if(distanceDifference <= -2){
+          if(distanceDifference <= -2.75){
             if(distanceDifference <= -15.0){
-              if(distance[0] < 5.5){
+              if(distance[0] < 6){
                 alignRight();
-              }else if(distance[0] > 7){
+              }else if(distance[0] > 8 && distance[0] < 12){
                 alignLeft();
               }else{
                 moveForward();
@@ -69,11 +74,11 @@ void loop(){
             }else{
               alignRight();
             }
-          }else if(distanceDifference >= 2){
+          }else if(distanceDifference >= 2.75){
             if(distanceDifference >= 15.0){
-              if(distance[1] < 5.5){
+              if(distance[1] < 6){
                 alignLeft();
-              }else if(distance[1] > 7){
+              }else if(distance[1] > 8 && distance[1] < 12){
                 alignRight();
               }else{
                 moveForward();
@@ -83,8 +88,6 @@ void loop(){
             }
           }
           else{
-            attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
-            attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
             moveForward();
           }
           current = millis();
@@ -101,7 +104,21 @@ void loop(){
 
   if(isReachPoint){
 
-    delay(100);
+    delay(500);
+
+    // update();
+    // if(angle < targetAngle - 4 || angle > targetAngle + 4){
+    //   while(true){
+    //     if(angle < targetAngle - 4){
+    //       alignLeft();
+    //     }else if(angle > targetAngle + 4){
+    //       alignRight();
+    //     }else{
+    //       stop();
+    //       break;
+    //     }
+    //   }
+    // }
 
     distance[0] = getDistance(LEFT);
     distance[1] = getDistance(RIGHT);

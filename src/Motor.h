@@ -16,8 +16,8 @@
 
 // Motor speed control
 const byte maxSpeed = 255;
-const byte equilibriumSpeed = 105; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
-const byte turningSpeed = 75;
+const byte equilibriumSpeed = 90; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
+const byte turningSpeed = 115;//125
 
 int leftSpeedVal;
 int rightSpeedVal;
@@ -64,42 +64,72 @@ void motorSetup(){
     pinMode(motor2B, OUTPUT);
     leftSpeedVal = equilibriumSpeed;
     rightSpeedVal = equilibriumSpeed;
-    analogWrite(motor1Speed,equilibriumSpeed);
-    analogWrite(motor2Speed,equilibriumSpeed);
+    analogWrite(motor1Speed,rightSpeedVal);
+    analogWrite(motor2Speed,leftSpeedVal);
     resetMotor1();
     resetMotor2();
     currentTime = millis();
 }
 
+bool isInterruptOn = false;
+
 // Motor movement control
 void moveForward(){
+    if(!isInterruptOn){
+        attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
+        attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+        isInterruptOn = true;
+    }
     analogWrite(motor1Speed,equilibriumSpeed);
     analogWrite(motor2Speed,equilibriumSpeed);
     goForwardMotor1();
     goForwardMotor2();
 }
 
+// Motor movement control
+void moveForwardSlow(){
+    if(!isInterruptOn){
+        attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
+        attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+        isInterruptOn = true;
+    }
+    analogWrite(motor1Speed,equilibriumSpeed-10);
+    analogWrite(motor2Speed,equilibriumSpeed-10);
+    goForwardMotor1();
+    goForwardMotor2();
+}
+
+void stop(){
+    analogWrite(motor1Speed,equilibriumSpeed);
+    analogWrite(motor2Speed,equilibriumSpeed);
+    resetMotor1();
+    resetMotor2();
+}
+
 void alignLeft(){
+    stop();
     detachInterrupt(digitalPinToInterrupt(encoderPinA));
     detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    isInterruptOn = false;
     leftSpeedVal = turningSpeed;
     rightSpeedVal = turningSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
     goForwardMotor1();
-    resetMotor2();
-    // goBackwardMotor2();
+    goBackwardMotor2();
 }
 
 void alignRight(){
+    stop();
     detachInterrupt(digitalPinToInterrupt(encoderPinA));
     detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    isInterruptOn = false;
     leftSpeedVal = turningSpeed;
     rightSpeedVal = turningSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
-    resetMotor1();
-    //goBackwardMotor1();
+    // resetMotor1();
+    goBackwardMotor1();
     goForwardMotor2();
 }
 
@@ -112,7 +142,8 @@ void turnLeft(){
     analogWrite(motor2Speed,turningSpeed);
     goForwardMotor1();
     goBackwardMotor2();
-    targetAngle = angle + 90;
+    targetAngle += 90;
+
 }
 
 void turnRight(){
@@ -120,63 +151,73 @@ void turnRight(){
     analogWrite(motor2Speed,turningSpeed);
     goBackwardMotor1();
     goForwardMotor2();
-    targetAngle = angle - 90;
+    targetAngle -= 90;
 }
 
 void uTurn(){
-    turnRight();
-    // targetAngle = 180;
+    analogWrite(motor1Speed,turningSpeed);
+    analogWrite(motor2Speed,turningSpeed);
+    goForwardMotor1();
+    goBackwardMotor2();
+    targetAngle += 180;
+
 }
 
-void stop(){
-    analogWrite(motor1Speed,equilibriumSpeed);
-    analogWrite(motor2Speed,equilibriumSpeed);
-    resetMotor1();
-    resetMotor2();
-}
 
 
 void moveCloseToWall(){
-    moveForward();
+    moveForwardSlow();
     while(true){
-        if(getDistance(FRONT) <= 5){
+        if(getDistance(FRONT) < 6){
             stop();
             break;
         }else{
-            delay(10);
+            delay(15);
             continue;
         }
     }
 }
+
+const float oneBlockSize = 20;
+
+float distance[3] = {0,0,0};
 
 void moveForwardAfterTurn(){
     while(true){
         update();
         float requiredAngle;
         if(isTurnRight){
-            requiredAngle = abs(angle) + targetAngle;
-        }else if(isTurnLeft){
-            requiredAngle = abs(angle) - targetAngle;
+            requiredAngle = targetAngle - angle;
+        }else if(isTurnLeft || isUTurn){
+            requiredAngle = angle - targetAngle;
         }
 
-        if(requiredAngle < 1){
+        if(requiredAngle < -5){
             continue;
         }else{
-            moveForward();
+            Serial.println(targetAngle);
+            stop();
             resetDistance();
-            detachInterrupt(digitalPinToInterrupt(encoderPinA));
-            detachInterrupt(digitalPinToInterrupt(encoderPinB));
-            attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
-            attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
             while(true){
-                if(getMovingDistance() < 25 && getDistance(FRONT) >= 7){
-                    delay(20);
+                if((getMovingDistance() <= oneBlockSize - 1) || getDistance(FRONT) < 7){
+                    update();
+                    // distance[0] = getDistance(LEFT);
+                    // distance[1] = getDistance(RIGHT);
+                    if(angle < targetAngle - 4){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                        alignLeft();
+                    }else if(angle > targetAngle + 4){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                        alignRight();
+                    }else{
+                        moveForwardSlow();
+                    }
+                    delay(5);
                     continue;
                 }else{
                     stop();
                     break;
                 }
             }
+            Serial.println("1");
             isReachPoint = true;
             break;
         }

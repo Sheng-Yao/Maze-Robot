@@ -47,5 +47,5 @@ float getDistance(Directions direction){
     digitalWrite(trigPinNo,HIGH);
     delay(10);
     digitalWrite(trigPinNo,LOW);
-    return (pulseIn(echoPinNo,HIGH) * 0.034613 / 2);
+    return (pulseIn(echoPinNo,HIGH) * 0.034613 / 2.00);
 }

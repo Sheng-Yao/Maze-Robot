@@ -9,8 +9,13 @@ const int MPU = 0x68; // MPU6050 I2C address
 // SCL -> A5 
 // SDA -> A4 
 
+float elapsedTime, currentTime, previousTime;
 float GyroErrorZ;
 float gyroOutputBuffer = 0;
+float yaw;
+
+float angle = 0;
+float targetAngle = 0;
 
 bool getOrientation(){
   // Reset variable holder for X, Y
@@ -22,6 +27,7 @@ bool getOrientation(){
   Wire.requestFrom(MPU, 6, true);
   gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;
   gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;
+  gyroOutputBuffer = 0;
   gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;  // get z rotation (yaw)
 
   if(gyroOutputBuffer != 0){
@@ -57,12 +63,6 @@ void mpuSetup(){
   calculateError();
 }
 
-float elapsedTime, currentTime, previousTime;
-float GyroZ; //angular velocity
-float yaw;
-
-float angle = 0;
-float targetAngle = 0;
 
 void update(){
     // === Read gyroscope (on the MPU6050) data === //
@@ -74,7 +74,7 @@ void update(){
     gyroOutputBuffer -= GyroErrorZ;
     // Currently the raw values are in degrees per seconds, deg/s, so we need to multiply by sendonds (s) to get the angle in degrees
     yaw += gyroOutputBuffer * elapsedTime;
-    angle = yaw; //if you mounted MPU6050 in a different orientation to me, angle may not = roll. It can roll, pitch, yaw or minus version of the three
+    angle = round(yaw*10)/10.0; //if you mounted MPU6050 in a different orientation to me, angle may not = roll. It can roll, pitch, yaw or minus version of the three
     //for me, turning right reduces angle. Turning left increases angle.
 }
 
