@@ -2,6 +2,7 @@
 #include <math.h>
 #include <MPU6050.h>
 #include <Encoder.h>
+#include <Ultrasonic.h>
 
 // Speed control pins
 #define motor1Speed 10
@@ -15,22 +16,13 @@
 
 // Motor speed control
 const byte maxSpeed = 255;
-const byte equilibriumSpeed = 155; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight 
+const byte equilibriumSpeed = 105; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
+const byte turningSpeed = 75;
 
 int leftSpeedVal;
 int rightSpeedVal;
 
-float elapsedTime, currentTime, previousTime;
-float AccX, AccY; //linear acceleration
-float GyroZ; //angular velocity
-float yaw;
-
-float angle = 0;
-float targetAngle = 0;
-
-bool isDriving = false; //it the car driving forward OR rotate/stationary
-bool prevIsDriving = true; //equals isDriving in the previous iteration of void loop()
-bool paused = false;
+bool isReachPoint = false;
 
 // Motor element direction control
 void resetMotor1(){
@@ -90,8 +82,8 @@ void moveForward(){
 void alignLeft(){
     detachInterrupt(digitalPinToInterrupt(encoderPinA));
     detachInterrupt(digitalPinToInterrupt(encoderPinB));
-    leftSpeedVal = equilibriumSpeed;
-    rightSpeedVal = equilibriumSpeed;
+    leftSpeedVal = turningSpeed;
+    rightSpeedVal = turningSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
     goForwardMotor1();
@@ -102,8 +94,8 @@ void alignLeft(){
 void alignRight(){
     detachInterrupt(digitalPinToInterrupt(encoderPinA));
     detachInterrupt(digitalPinToInterrupt(encoderPinB));
-    leftSpeedVal = equilibriumSpeed;
-    rightSpeedVal = equilibriumSpeed;
+    leftSpeedVal = turningSpeed;
+    rightSpeedVal = turningSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
     resetMotor1();
@@ -115,37 +107,26 @@ bool isTurnLeft = false;
 bool isTurnRight = false;
 bool isUTurn = false;
 
-// void turnLeft(){
-//     analogWrite(motor1Speed,maxSpeed);
-//     analogWrite(motor2Speed,maxSpeed);
-//     goBackwardMotor1();
-//     goForwardMotor2();
-//     // targetAngle += 90;
-//     // if (targetAngle > 180){
-//     //     targetAngle -= 360;
-//     // }
-//     // isDriving = false;
-// }
-
-void turnRight(){
-    analogWrite(motor1Speed,equilibriumSpeed);
-    analogWrite(motor2Speed,equilibriumSpeed);
-    goBackwardMotor1();
-    goForwardMotor2();
-    targetAngle = 90;
+void turnLeft(){
+    analogWrite(motor1Speed,turningSpeed);
+    analogWrite(motor2Speed,turningSpeed);
+    goForwardMotor1();
+    goBackwardMotor2();
+    targetAngle = angle + 90;
 }
 
-// void uTurn(){
-//     analogWrite(motor1Speed,maxSpeed);
-//     analogWrite(motor2Speed,maxSpeed);
-//     goBackwardMotor1();
-//     goForwardMotor2();
-//     // targetAngle += 180;
-//     // if (targetAngle > 360){
-//     //     targetAngle -= 360;
-//     // }
-//     // isDriving = false;
-// }
+void turnRight(){
+    analogWrite(motor1Speed,turningSpeed);
+    analogWrite(motor2Speed,turningSpeed);
+    goBackwardMotor1();
+    goForwardMotor2();
+    targetAngle = angle - 90;
+}
+
+void uTurn(){
+    turnRight();
+    // targetAngle = 180;
+}
 
 void stop(){
     analogWrite(motor1Speed,equilibriumSpeed);
@@ -154,16 +135,50 @@ void stop(){
     resetMotor2();
 }
 
-void update(){
-    // === Read gyroscope (on the MPU6050) data === //
-    previousTime = currentTime;
-    currentTime = millis();
-    elapsedTime = (currentTime - previousTime) / 1000; // Divide by 1000 to get seconds
-    getOrientation();
-    // Correct the outputs with the calculated error values
-    gyroOutputBuffer -= GyroErrorZ;
-    // Currently the raw values are in degrees per seconds, deg/s, so we need to multiply by sendonds (s) to get the angle in degrees
-    yaw += gyroOutputBuffer * elapsedTime;
-    angle = yaw; //if you mounted MPU6050 in a different orientation to me, angle may not = roll. It can roll, pitch, yaw or minus version of the three
-    //for me, turning right reduces angle. Turning left increases angle.
+
+void moveCloseToWall(){
+    moveForward();
+    while(true){
+        if(getDistance(FRONT) <= 5){
+            stop();
+            break;
+        }else{
+            delay(10);
+            continue;
+        }
+    }
+}
+
+void moveForwardAfterTurn(){
+    while(true){
+        update();
+        float requiredAngle;
+        if(isTurnRight){
+            requiredAngle = abs(angle) + targetAngle;
+        }else if(isTurnLeft){
+            requiredAngle = abs(angle) - targetAngle;
+        }
+
+        if(requiredAngle < 1){
+            continue;
+        }else{
+            moveForward();
+            resetDistance();
+            detachInterrupt(digitalPinToInterrupt(encoderPinA));
+            detachInterrupt(digitalPinToInterrupt(encoderPinB));
+            attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
+            attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+            while(true){
+                if(getMovingDistance() < 25 && getDistance(FRONT) >= 7){
+                    delay(20);
+                    continue;
+                }else{
+                    stop();
+                    break;
+                }
+            }
+            isReachPoint = true;
+            break;
+        }
+    }
 }

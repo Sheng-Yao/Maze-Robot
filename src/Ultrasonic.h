@@ -21,8 +21,27 @@ void ultrasonicSetup(){
     pinMode(rightTrig, OUTPUT);
 }
 
+enum Directions{
+    FRONT = 0,
+    LEFT = 1,
+    RIGHT = 2
+};
+
 // Return distance in cm
-float getDistance(byte trigPinNo, byte echoPinNo){
+float getDistance(Directions direction){
+
+    byte trigPinNo, echoPinNo;
+    if(direction == FRONT){
+        trigPinNo = frontTrig;
+        echoPinNo = frontEcho;
+    }else if(direction == LEFT){
+        trigPinNo = leftTrig;
+        echoPinNo = leftEcho;
+    }else if(direction == RIGHT){
+        trigPinNo = rightTrig;
+        echoPinNo = rightEcho;
+    }
+
     digitalWrite(trigPinNo,LOW);
     delay(2);
     digitalWrite(trigPinNo,HIGH);

@@ -1,5 +1,5 @@
 #include <Motor.h>
-#include <Ultrasonic.h>
+#include <Mapping.h>
 
 void setup(){
 
@@ -20,69 +20,44 @@ void setup(){
 }
 
 bool isMoving = false;
-bool isReachPoint = false;
 
 float distance[3] = {0,0,0};
 
-const byte mazeWidth = 15;
+const byte mazeWidth = 10;
 
 unsigned long current = millis();
 
 void loop(){
-  if(getDistance(frontTrig,frontEcho) > 5){
+  if(getDistance(FRONT) > 3){
     if(!isMoving){
       if(isTurnLeft || isTurnRight || isUTurn){
         if(isTurnRight){
           turnRight();
-          while(true){
-            update();
-            if(isTurnRight){
-              if(abs(angle) < targetAngle){
-                continue;
-              }else{
-                moveForward();
-                resetDistance();
-                detachInterrupt(digitalPinToInterrupt(encoderPinA));
-                detachInterrupt(digitalPinToInterrupt(encoderPinB));
-                attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
-                attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
-                while(true){
-                  float result = getMovingDistance();
-                  Serial.println(result);
-                  if(result < 25){
-                    continue;
-                  }else{
-                    stop();
-                    break;
-                  }
-                }
-                isReachPoint = true;
-                isTurnRight = false;
-                break;
-              }
-            }
-          }
-          delay(5000);
+          moveForwardAfterTurn();
+          isTurnRight = false;
+        }else if(isTurnLeft){
+          turnLeft();
+          moveForwardAfterTurn();
+          isTurnLeft = false;
         }
-
       }else{
         moveForward();
         isMoving = true;
         resetDistance();
       }
     }else{
-      float ultrasonicResult = getDistance(frontTrig,frontEcho);
-      if((getMovingDistance() >= 25) && (round(ultrasonicResult) % 25 <= 3 || ultrasonicResult <= 7)){
+      float ultrasonicResult = getDistance(FRONT);
+      if((getMovingDistance() >= 25) && (round(ultrasonicResult) % 23 <= 2 || ultrasonicResult <= 7)){
         stop();
         isMoving = false;
         isReachPoint = true;
       }else{
         // Moving forward + Align
-        if(millis() - current > 75){
-          distance[0] = getDistance(leftTrig,leftEcho);
-          distance[1] = getDistance(rightTrig,rightEcho);
+        if(millis() - current > 25){
+          distance[0] = getDistance(LEFT);
+          distance[1] = getDistance(RIGHT);
           float distanceDifference = distance[0] - distance[1];
-          if(distanceDifference <= -2.5){
+          if(distanceDifference <= -2){
             if(distanceDifference <= -15.0){
               if(distance[0] < 5.5){
                 alignRight();
@@ -94,8 +69,7 @@ void loop(){
             }else{
               alignRight();
             }
-
-          }else if(distanceDifference >= 2.5){
+          }else if(distanceDifference >= 2){
             if(distanceDifference >= 15.0){
               if(distance[1] < 5.5){
                 alignLeft();
@@ -127,77 +101,116 @@ void loop(){
 
   if(isReachPoint){
 
-    distance[0] = getDistance(leftTrig,leftEcho);
-    distance[1] = getDistance(rightTrig,rightEcho);
-    distance[2] = getDistance(frontTrig,frontEcho);
+    delay(100);
 
-    Serial.println("Distance (Left): " + String(distance[0]));
-
-    delay(5);
-
-    Serial.println("Distance (Right): " + String(distance[1]));
-
-    delay(5);
-
-    Serial.println("Distance (Front): " + String(distance[2]));
+    distance[0] = getDistance(LEFT);
+    distance[1] = getDistance(RIGHT);
+    distance[2] = getDistance(FRONT);
 
     if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
-      Serial.println("Dead End");
+      Serial.println("Dead End (G)");
+      moveCloseToWall();
       isUTurn = true;
       isTurnLeft = false;
       isTurnRight = false;
+      // Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
+      // if(currentMode == FORWARD){
+      //   currentMode = BACKWARD;
+      // }else if(currentMode == BACKWARD){
+      //   currentMode = FORWARD;
+      // }else if(currentMode == LEFT_DIRECTION){
+      //   currentMode = RIGHT_DIRECTION;
+      // }else if(currentMode == RIGHT_DIRECTION){
+      //   currentMode = LEFT_DIRECTION;
+      // }
     }else if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
-      Serial.println("Front");
+      Serial.println("Front (C)");
       isTurnLeft = false;
       isTurnRight = false;
       isUTurn = false;
+      // Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
+      // if(currentMode == FORWARD){
+      //   yPosition++;
+      // }else if(currentMode == BACKWARD){
+      //   yPosition--;
+      // }else if(currentMode == LEFT_DIRECTION){
+      //   xPosition--;
+      // }else if(currentMode == RIGHT_DIRECTION){
+      //   xPosition++;
+      // }
     }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
-      Serial.println("Left branch");
-      moveForward();
-      while(true){
-        if(getDistance(frontTrig,frontEcho) < 7){
-          stop();
-          break;
-        }else{
-          delay(50);
-          continue;
-        }
-      }
+      Serial.println("Left branch (F)");
+      moveCloseToWall();
       isTurnLeft = true;
       isTurnRight = false;
       isUTurn = false;
+      // Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
+      // if(currentMode == FORWARD){
+      //   currentMode = LEFT_DIRECTION;
+      //   xPosition--;
+      // }else if(currentMode == BACKWARD){
+      //   currentMode = RIGHT_DIRECTION;
+      //   xPosition++;
+      // }else if(currentMode == LEFT_DIRECTION){
+      //   currentMode = BACKWARD;
+      //   yPosition--;
+      // }else if(currentMode == RIGHT_DIRECTION){
+      //   currentMode = FORWARD;
+      //   yPosition++;
+      // }
     }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
-      Serial.println("Right branch");
-      moveForward();
-      while(true){
-        if(getDistance(frontTrig,frontEcho) < 7){
-          stop();
-          break;
-        }else{
-          delay(50);
-          continue;
-        }
-      }
+      Serial.println("Right branch (E)");
+      moveCloseToWall();
       isTurnRight = true;
       isTurnLeft = false;
       isUTurn = false;
+      // Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
+      // if(currentMode == FORWARD){
+      //   currentMode = RIGHT_DIRECTION;
+      //   xPosition++;
+      // }else if(currentMode == BACKWARD){
+      //   currentMode = LEFT_DIRECTION;
+      //   xPosition--;
+      // }else if(currentMode == LEFT_DIRECTION){
+      //   currentMode = FORWARD;
+      //   yPosition++;
+      // }else if(currentMode == RIGHT_DIRECTION){
+      //   currentMode = BACKWARD;
+      //   yPosition--;
+      // }
     }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
       Serial.println("Left and Right branches");
-      //
+      moveCloseToWall();
+      isTurnLeft = true;
+      isTurnRight = false;
+      isUTurn = false;
+      // turnLeft();
     }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
-      Serial.println("Left and front branches");
-      //
+      Serial.println("Left and front branches (D)");
+      isTurnLeft = false;
+      isTurnRight = false;
+      isUTurn = false;
+      // turnLeft();
     }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
-      Serial.println("Right and front branches");
+      Serial.println("Right and front branches (B)");
+      isTurnLeft = false;
+      isTurnRight = false;
+      isUTurn = false;
       // turnRight();
     }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
       Serial.println("Left, Right and front branches");
-      // turnLeft(); // Possible reach the end point need to add in with end point validation
+      isTurnLeft = false;
+      isTurnRight = false;
+      isUTurn = false;
+      // turnLeft();
+      // Possible reach the end point need to add in with end point validation
     }
+
+    isMoving = false;
     
     isReachPoint = false;
 
-    delay(5000);
+    delay(2500);
 
     currentTime = millis();
   }
