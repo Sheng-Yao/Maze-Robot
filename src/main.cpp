@@ -73,6 +73,7 @@ void loop(){
               }else if(distance[0] > 8 && distance[0] < 12){
                 alignLeft();
               }else if(distance[1] > 15){
+                update();
                 if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                   alignLeft();
                 }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
@@ -93,6 +94,7 @@ void loop(){
               }else if(distance[1] > 8 && distance[1] < 12){
                 alignRight();
               }else if(distance[0] > 15){
+                update();
                 if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                   alignLeft();
                 }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
@@ -481,7 +483,7 @@ void loop(){
       while(1){;}
     }
 
-    if(xPosition < 0 || yPosition < 0){
+    if(xPosition < 0 || yPosition < 0 || xPosition == PUZZLE_X || yPosition == PUZZLE_Y){
       Serial.println("Array out of range.");
       while(1){;}
     }

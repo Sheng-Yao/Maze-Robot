@@ -190,7 +190,7 @@ void moveForwardAfterTurn(){
             requiredAngle = angle - targetAngle;
         }
 
-        if(requiredAngle <= 0){
+        if(requiredAngle <= 0.5){
             continue;
         }else{
             Serial.println(targetAngle);
