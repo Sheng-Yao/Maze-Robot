@@ -72,20 +72,15 @@ void loop(){
                 alignRight();
               }else if(distance[0] > 8 && distance[0] < 12){
                 alignLeft();
-              }else if(distance[1] > 15){
-                update();
-                if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                  alignLeft();
-                }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                  alignRight();
-                }else{
-                  moveForward();
-                }
               }else{
                 moveForward();
               }
             }else{
-              alignRight();
+              if(distance[0] > mazeWidth + 10 && distance[1] > mazeWidth + 10){
+                moveForward();
+              }else{
+                alignRight();
+              }
             }
           }else if(distanceDifference >= 2){
             if(distanceDifference >= 15.0){
@@ -93,20 +88,23 @@ void loop(){
                 alignLeft();
               }else if(distance[1] > 8 && distance[1] < 12){
                 alignRight();
-              }else if(distance[0] > 15){
-                update();
-                if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                  alignLeft();
-                }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                  alignRight();
-                }else{
-                  moveForward();
-                }
               }else{
                 moveForward();
               }
             }else{
-              alignLeft();
+              if(distance[0] > mazeWidth + 10 && distance[1] > mazeWidth + 10){
+                update();
+                if(angle < targetAngle - 4){
+                  alignLeft();
+                }else if(angle > targetAngle + 4){
+                  alignRight();
+                }else{
+                  moveForwardSlow();
+                }
+              }else{
+                alignLeft();
+              }
+
             }
           }
           else{
@@ -369,16 +367,15 @@ void loop(){
         }
       }else if(maps[xPosition][yPosition] == "R"){
         Serial.println("Right (R) [Written]");
-        moveCloseToWall();
         if(currentMode == FORWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
             maps[xPosition][yPosition] = "X";
           }
-          isTurnRight = true;
-          isTurnLeft = false;
+          isTurnRight = false;
+          isTurnLeft = true;
           isUTurn = false;
-          currentMode = RIGHT_DIRECTION;
-          xPosition++;
+          currentMode = LEFT_DIRECTION;
+          xPosition--;
         }else if(currentMode == BACKWARD){
           if(maps[xPosition][yPosition + 1] == "X"){
             maps[xPosition][yPosition] = "X";
@@ -392,11 +389,11 @@ void loop(){
           if(maps[xPosition - 1][yPosition] == "X"){
             maps[xPosition][yPosition] = "X";
           }
-          isTurnLeft = false;
+          isTurnLeft = true;
           isTurnRight = false;
           isUTurn = false;
-          currentMode = RIGHT_DIRECTION;
-          xPosition++;
+          currentMode = FORWARD;
+          yPosition++;
         }else if(currentMode == LEFT_DIRECTION){
           if(maps[xPosition + 1][yPosition] == "X"){
             maps[xPosition][yPosition] = "X";
@@ -409,15 +406,15 @@ void loop(){
         }
       }else if(maps[xPosition][yPosition] == "LR"){
         Serial.println("Left and Right (LR) [Written]");
-        if(currentMode == FORWARD){
-          if(maps[xPosition][yPosition - 1] == "X"){
+        if(currentMode == BACKWARD){
+          if(maps[xPosition][yPosition + 1] == "X"){
             maps[xPosition][yPosition] = "R";
           }
           isTurnRight = false;
           isTurnLeft = false;
           isUTurn = false;
-          currentMode = FORWARD;
-          yPosition++;
+          currentMode = BACKWARD;
+          yPosition--;
         }else if(currentMode == RIGHT_DIRECTION){
           if(maps[xPosition - 1][yPosition] == "X"){
             maps[xPosition][yPosition] = "R";

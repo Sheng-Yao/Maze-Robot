@@ -129,6 +129,7 @@ void alignRight(){
     rightSpeedVal = turningSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
+    // resetMotor1();
     goBackwardMotor1();
     goForwardMotor2();
 }
@@ -164,6 +165,8 @@ void uTurn(){
 
 }
 
+
+
 void moveCloseToWall(){
     while(true){
         if(getDistance(FRONT) <= 5.75){
@@ -190,7 +193,7 @@ void moveForwardAfterTurn(){
             requiredAngle = angle - targetAngle;
         }
 
-        if(requiredAngle <= 0.5){
+        if(requiredAngle <= 2){
             continue;
         }else{
             Serial.println(targetAngle);
@@ -200,9 +203,9 @@ void moveForwardAfterTurn(){
                 float distanceResult = getDistance(FRONT);
                 if((getMovingDistance() <= oneBlockSize + 3) && distanceResult > 8.5){
                     update();
-                    if(angle < targetAngle - 3){
+                    if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                         alignLeft();
-                    }else if(angle > targetAngle + 3){
+                    }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
                         alignRight();
                     }else{
                         moveForwardSlow();
