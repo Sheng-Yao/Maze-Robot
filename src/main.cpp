@@ -22,7 +22,7 @@ void setup(){
 bool isMoving = false;
 
 
-const byte mazeWidth = 10;
+const byte mazeWidth = 15;
 
 unsigned long current = millis();
 
@@ -52,7 +52,7 @@ void loop(){
       }
     }else{
       float ultrasonicResult = getDistance(FRONT);
-      if((getMovingDistance() > oneBlockSize + 0.5 && (int(ultrasonicResult) % 20 > 6 && int(ultrasonicResult) % 20 < 9) ) || ultrasonicResult < 8){
+      if((getMovingDistance() > oneBlockSize + 0.5 && (int(ultrasonicResult) % 20 >  6 && int(ultrasonicResult) % 20 < 9) ) || ultrasonicResult < 8){
         Serial.print(getMovingDistance());
         Serial.print("  " + String(int(ultrasonicResult) % 20));
         Serial.print("  " + String(ultrasonicResult));
@@ -115,6 +115,7 @@ void loop(){
       distance[0] = getDistance(LEFT);
       distance[1] = getDistance(RIGHT);
       distance[2] = getDistance(FRONT);
+      Serial.println(distance[2]);
 
       if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
         Serial.println("Dead End (X)");
@@ -387,7 +388,6 @@ void loop(){
           yPosition--;
         }
       }else if(maps[xPosition][yPosition] == "LR"){
-        moveCloseToWall();
         if(currentMode == FORWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
             maps[xPosition][yPosition] = "R";
@@ -397,6 +397,15 @@ void loop(){
           isUTurn = false;
           currentMode = FORWARD;
           yPosition++;
+        }else if(currentMode == BACKWARD){
+          if(maps[xPosition][yPosition + 1] == "X"){
+            maps[xPosition][yPosition] = "R";
+          }
+          isTurnRight = false;
+          isTurnLeft = false;
+          isUTurn = false;
+          currentMode = BACKWARD;
+          yPosition--;
         }else if(currentMode == RIGHT_DIRECTION){
           if(maps[xPosition - 1][yPosition] == "X"){
             maps[xPosition][yPosition] = "R";
@@ -429,18 +438,19 @@ void loop(){
           currentMode = RIGHT_DIRECTION;
           xPosition++;
         }
-      }else if(maps[xPosition][yPosition] == "FLR"){
-        if(currentMode == BACKWARD){
-          if(maps[xPosition][yPosition - 1] == "X"){
-            maps[xPosition][yPosition] = "LR";
-          }
-          isTurnRight = true;
-          isTurnLeft = false;
-          isUTurn = false;
-          currentMode = LEFT_DIRECTION;
-          xPosition--;
-        }
       }
+      // }else if(maps[xPosition][yPosition] == "FLR"){
+      //   if(currentMode == BACKWARD){
+      //     if(maps[xPosition][yPosition - 1] == "X"){
+      //       maps[xPosition][yPosition] = "LR";
+      //     }
+      //     isTurnRight = true;
+      //     isTurnLeft = false;
+      //     isUTurn = false;
+      //     currentMode = LEFT_DIRECTION;
+      //     xPosition--;
+      //   }
+      // }
     }
 
     printMaps();

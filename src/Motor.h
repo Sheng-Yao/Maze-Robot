@@ -169,7 +169,7 @@ void uTurn(){
 
 void moveCloseToWall(){
     while(true){
-        if(getDistance(FRONT) <= 5){
+        if(getDistance(FRONT) <= 5.75){
             stop();
             break;
         }else{
@@ -193,7 +193,7 @@ void moveForwardAfterTurn(){
             requiredAngle = angle - targetAngle;
         }
 
-        if(requiredAngle < -5){
+        if(requiredAngle <= 0){
             continue;
         }else{
             Serial.println(targetAngle);
