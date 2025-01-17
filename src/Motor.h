@@ -203,8 +203,6 @@ void moveForwardAfterTurn(){
                 float distanceResult = getDistance(FRONT);
                 if((getMovingDistance() <= oneBlockSize + 3) && distanceResult > 8.5){
                     update();
-                    // distance[0] = getDistance(LEFT);
-                    // distance[1] = getDistance(RIGHT);
                     if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                         alignLeft();
                     }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
@@ -223,5 +221,3 @@ void moveForwardAfterTurn(){
         }
     }
 }
-
-bool isReturning = false;
