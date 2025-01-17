@@ -12,20 +12,23 @@ enum Mode{
 
 Mode currentMode = FORWARD;
 
-String maps[5][5] = {
+const byte PUZZLE_X = 5;
+const byte PUZZLE_Y = 5;
+
+String maps[PUZZLE_X][PUZZLE_Y] = {
     {"0","0","0","0","0"},
     {"0","0","0","0","0"},
     {"0","0","0","0","0"},
     {"0","0","0","0","0"},
     {"0","0","0","0","0"}
 };
-Mode mapsOrientation[5][5];
+Mode mapsOrientation[PUZZLE_X][PUZZLE_Y];
 
 void printMaps(){
     Serial.println();
-    for(int j = 4; j >= 0; j--){
+    for(int j = PUZZLE_Y - 1; j >= 0; j--){
         Serial.print("[");
-        for(byte i = 0; i < 5; i++){
+        for(byte i = 0; i < PUZZLE_X; i++){
             Serial.print(maps[i][j]);
             if(i != 4){
                 Serial.print(",");
