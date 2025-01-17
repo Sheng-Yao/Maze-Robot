@@ -53,10 +53,10 @@ void loop(){
     }else{
       float ultrasonicResult = getDistance(FRONT);
       if((getMovingDistance() > oneBlockSize + 0.5 && (int(ultrasonicResult) % 20 > 6 && int(ultrasonicResult) % 20 < 9) ) || ultrasonicResult < 8){
-        Serial.print(getMovingDistance());
-        Serial.print("  " + String(int(ultrasonicResult) % 20));
-        Serial.print("  " + String(ultrasonicResult));
-        Serial.println();
+        // Serial.print(getMovingDistance());
+        // Serial.print("  " + String(int(ultrasonicResult) % 20));
+        // Serial.print("  " + String(ultrasonicResult));
+        // Serial.println();
         stop();
         isMoving = false;
         isReachPoint = true;
@@ -170,7 +170,7 @@ void loop(){
           xPosition++;
         }
       }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){
-        Serial.println("Left branch (L)");
+        Serial.println("Left (L)");
         moveCloseToWall();
         isTurnLeft = true;
         isTurnRight = false;
@@ -191,7 +191,7 @@ void loop(){
           yPosition++;
         }
       }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
-        Serial.println("Right branch (R)");
+        Serial.println("Right (R)");
         moveCloseToWall();
         isTurnRight = true;
         isTurnLeft = false;
@@ -212,7 +212,7 @@ void loop(){
           yPosition--;
         }
       }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){
-        Serial.println("Left and Right branches");
+        Serial.println("Left and Right (LR)");
         moveCloseToWall();
         isTurnLeft = true;
         isTurnRight = false;
@@ -233,7 +233,7 @@ void loop(){
           yPosition++;
         }
       }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){
-        Serial.println("Front and Left branches (FL)");
+        Serial.println("Front and Left (FL)");
         isTurnLeft = false;
         isTurnRight = false;
         isUTurn = false;
@@ -253,7 +253,7 @@ void loop(){
           xPosition++;
         }
       }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
-        Serial.println("Front and Right branches (FR)");
+        Serial.println("Front and Right (FR)");
         isTurnLeft = false;
         isTurnRight = false;
         isUTurn = false;
@@ -272,27 +272,28 @@ void loop(){
           currentMode = RIGHT_DIRECTION;
           xPosition++;
         }
-      }else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
-        Serial.println("Front, Left and Right branches");
-        isTurnLeft = false;
-        isTurnRight = false;
-        isUTurn = false;
-        maps[xPosition][yPosition] = "FLR";
-        Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
-        if(currentMode == FORWARD){
-          currentMode = FORWARD;
-          yPosition++;
-        }else if(currentMode == BACKWARD){
-          currentMode = BACKWARD;
-          yPosition--;
-        }else if(currentMode == LEFT_DIRECTION){
-          currentMode = LEFT_DIRECTION;
-          xPosition--;
-        }else if(currentMode == RIGHT_DIRECTION){
-          currentMode = RIGHT_DIRECTION;
-          xPosition++;
-        }
       }
+      // else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
+      //   Serial.println("Front, Left and Right branches");
+      //   isTurnLeft = false;
+      //   isTurnRight = false;
+      //   isUTurn = false;
+      //   maps[xPosition][yPosition] = "FLR";
+      //   Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
+      //   if(currentMode == FORWARD){
+      //     currentMode = FORWARD;
+      //     yPosition++;
+      //   }else if(currentMode == BACKWARD){
+      //     currentMode = BACKWARD;
+      //     yPosition--;
+      //   }else if(currentMode == LEFT_DIRECTION){
+      //     currentMode = LEFT_DIRECTION;
+      //     xPosition--;
+      //   }else if(currentMode == RIGHT_DIRECTION){
+      //     currentMode = RIGHT_DIRECTION;
+      //     xPosition++;
+      //   }
+      // }
     }else{
       if(maps[xPosition][yPosition] == "F"){
         Serial.println("Front (F) [Written]");
@@ -325,7 +326,7 @@ void loop(){
           xPosition++;
         }
       }else if(maps[xPosition][yPosition] == "L"){
-        Serial.println("Left branch (L) [Written]");
+        Serial.println("Left (L) [Written]");
         moveCloseToWall();
         if(currentMode == FORWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
@@ -365,7 +366,7 @@ void loop(){
           yPosition--;
         }
       }else if(maps[xPosition][yPosition] == "R"){
-        Serial.println("Right branch (R) [Written]");
+        Serial.println("Right (R) [Written]");
         moveCloseToWall();
         if(currentMode == FORWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
@@ -405,7 +406,7 @@ void loop(){
           yPosition--;
         }
       }else if(maps[xPosition][yPosition] == "LR"){
-        Serial.println("Left and Right branches [Written]");
+        Serial.println("Left and Right (LR) [Written]");
         if(currentMode == FORWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
             maps[xPosition][yPosition] = "R";
@@ -426,7 +427,7 @@ void loop(){
           xPosition++;
         }
       }else if(maps[xPosition][yPosition] == "FL"){
-        Serial.println("Front and Left branches [Written]");
+        Serial.println("Front and Left (FL) [Written]");
         if(currentMode == BACKWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
             maps[xPosition][yPosition] = "L";
@@ -438,7 +439,7 @@ void loop(){
           xPosition--;
         }
       }else if(maps[xPosition][yPosition] == "FR"){
-        Serial.println("Front and Right branches [Written]");
+        Serial.println("Front and Right (FR) [Written]");
         if(currentMode == BACKWARD){
           if(maps[xPosition][yPosition - 1] == "X"){
             maps[xPosition][yPosition] = "R";
@@ -449,6 +450,7 @@ void loop(){
           currentMode = RIGHT_DIRECTION;
           xPosition++;
         }
+      }
       // }else if(maps[xPosition][yPosition] == "FLR"){
       //   if(currentMode == BACKWARD){
       //     if(maps[xPosition][yPosition - 1] == "X"){

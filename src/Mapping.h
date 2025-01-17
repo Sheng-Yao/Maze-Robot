@@ -22,7 +22,7 @@ String maps[PUZZLE_X][PUZZLE_Y] = {
     {"0","0","0","0","0"},
     {"0","0","0","0","0"}
 };
-Mode mapsOrientation[PUZZLE_X][PUZZLE_Y];
+// Mode mapsOrientation[PUZZLE_X][PUZZLE_Y];
 
 void printMaps(){
     Serial.println();
