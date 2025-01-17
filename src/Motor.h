@@ -17,7 +17,7 @@
 // Motor speed control
 const byte maxSpeed = 255;
 const byte equilibriumSpeed = 90; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
-const byte turningSpeed = 115;//125
+const byte turningSpeed = 100;//125
 
 int leftSpeedVal;
 int rightSpeedVal;
@@ -119,6 +119,7 @@ void alignLeft(){
     goBackwardMotor2();
 }
 
+
 void alignRight(){
     stop();
     detachInterrupt(digitalPinToInterrupt(encoderPinA));
@@ -132,6 +133,7 @@ void alignRight(){
     goBackwardMotor1();
     goForwardMotor2();
 }
+
 
 bool isTurnLeft = false;
 bool isTurnRight = false;
@@ -166,13 +168,12 @@ void uTurn(){
 
 
 void moveCloseToWall(){
-    moveForwardSlow();
     while(true){
-        if(getDistance(FRONT) < 6){
+        if(getDistance(FRONT) <= 5){
             stop();
             break;
         }else{
-            delay(15);
+            moveForwardSlow();
             continue;
         }
     }
@@ -199,27 +200,28 @@ void moveForwardAfterTurn(){
             stop();
             resetDistance();
             while(true){
-                if((getMovingDistance() <= oneBlockSize - 1) || getDistance(FRONT) < 7){
+                float distanceResult = getDistance(FRONT);
+                if((getMovingDistance() <= oneBlockSize + 3) && distanceResult > 8.5){
                     update();
                     // distance[0] = getDistance(LEFT);
                     // distance[1] = getDistance(RIGHT);
-                    if(angle < targetAngle - 4){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                    if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                         alignLeft();
-                    }else if(angle > targetAngle + 4){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                    }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
                         alignRight();
                     }else{
                         moveForwardSlow();
                     }
-                    delay(5);
                     continue;
                 }else{
                     stop();
                     break;
                 }
             }
-            Serial.println("1");
             isReachPoint = true;
             break;
         }
     }
 }
+
+bool isReturning = false;

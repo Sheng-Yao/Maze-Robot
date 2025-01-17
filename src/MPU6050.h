@@ -40,6 +40,7 @@ bool getOrientation(){
 void calculateError() {
   // Read accelerometer values 200 times
   byte c = 0;
+  GyroErrorZ = 0;
   
   // Read gyro values 200 times
   while (c < 200) {
