@@ -22,7 +22,7 @@ void setup(){
 bool isMoving = false;
 
 
-const byte mazeWidth = 10;
+const byte mazeWidth = 15;
 
 unsigned long current = millis();
 
@@ -52,11 +52,11 @@ void loop(){
       }
     }else{
       float ultrasonicResult = getDistance(FRONT);
-      if((getMovingDistance() > oneBlockSize + 0.5 && (int(ultrasonicResult) % 20 > 6 && int(ultrasonicResult) % 20 < 9) ) || ultrasonicResult < 8){
-        // Serial.print(getMovingDistance());
-        // Serial.print("  " + String(int(ultrasonicResult) % 20));
-        // Serial.print("  " + String(ultrasonicResult));
-        // Serial.println();
+      if((getMovingDistance() > oneBlockSize - 0.5 && (int(ultrasonicResult) % 20 > 5 && int(ultrasonicResult) % 20 < 11) ) || ultrasonicResult < 8){
+        Serial.print(getMovingDistance());
+        Serial.print("  " + String(int(ultrasonicResult) % 20));
+        Serial.print("  " + String(ultrasonicResult));
+        Serial.println();
         stop();
         isMoving = false;
         isReachPoint = true;
@@ -66,45 +66,49 @@ void loop(){
           distance[0] = getDistance(LEFT);
           distance[1] = getDistance(RIGHT);
           float distanceDifference = distance[0] - distance[1];
-          if(distanceDifference <= -2){
-            if(distanceDifference <= -15.0){
-              if(distance[0] < 6){
+          Serial.println("distance[0]:" + String(distance[0]));
+          Serial.println("distance[1]:"+String(distance[1]));
+          Serial.println("distanceDifference:"+String(distanceDifference));
+          if(distanceDifference <= -2.5){
+            if(distanceDifference <= -10.0){
+              if(distance[0] < 4){
                 alignRight();
-              }else if(distance[0] > 8 && distance[0] < 12){
+              }else if(distance[0] > 5 && distance[0] < 6.5){
                 alignLeft();
               }else{
                 moveForward();
               }
             }else{
-              if(distance[0] > mazeWidth + 10 && distance[1] > mazeWidth + 10){
-                moveForward();
-              }else{
-                alignRight();
-              }
+              // if(distance[0] > mazeWidth + 10 && distance[1] > mazeWidth + 10){
+              //   moveForward();
+              // }else{
+              //   alignRight();
+              // }
+              alignRight();
             }
-          }else if(distanceDifference >= 2){
-            if(distanceDifference >= 15.0){
-              if(distance[1] < 6){
+          }else if(distanceDifference >= 2.5){
+            if(distanceDifference >= 10.0){
+              if(distance[1] < 4){
                 alignLeft();
-              }else if(distance[1] > 8 && distance[1] < 12){
+              }else if(distance[1] > 5 && distance[1] < 6.5){
                 alignRight();
               }else{
-                moveForward();
+                if(distance[0] > mazeWidth + 5 && distance[1] > mazeWidth + 5){
+                  update();
+                  if(angle < targetAngle - 4){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                    alignLeft();
+                  }else if(angle > targetAngle + 4){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                    alignRight();
+                  }else{
+                    moveForward();
+                  }
+                  delay(20);
+                }else{
+                  moveForward();
+                }
               }
             }else{
-              if(distance[0] > mazeWidth + 10 && distance[1] > mazeWidth + 10){
-                update();
-                if(angle < targetAngle - 4){
-                  alignLeft();
-                }else if(angle > targetAngle + 4){
-                  alignRight();
-                }else{
-                  moveForwardSlow();
-                }
-              }else{
-                alignLeft();
-              }
-
+              alignLeft();
             }
           }
           else{
@@ -436,6 +440,15 @@ void loop(){
           isUTurn = false;
           currentMode = LEFT_DIRECTION;
           xPosition--;
+        }else if(currentMode == LEFT_DIRECTION){
+          if(maps[xPosition + 1][yPosition] == "X"){
+            maps[xPosition][yPosition] = "L";
+          }
+          isTurnRight = true;
+          isTurnLeft = false;
+          isUTurn = false;
+          currentMode = FORWARD;
+          yPosition++;
         }
       }else if(maps[xPosition][yPosition] == "FR"){
         Serial.println("Front and Right (FR) [Written]");
@@ -470,7 +483,7 @@ void loop(){
     
     isReachPoint = false;
 
-    delay(2500);
+    delay(1000);
 
     currentTime = millis();
 

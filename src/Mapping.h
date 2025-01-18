@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-byte xPosition = 1;// initial point = 0
-byte yPosition = 1;// initial point = 0
+byte xPosition = 0;// initial point = 0
+byte yPosition = 0;// initial point = 0
 
 enum Mode{
     FORWARD,

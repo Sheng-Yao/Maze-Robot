@@ -16,8 +16,8 @@
 
 // Motor speed control
 const byte maxSpeed = 255;
-const byte equilibriumSpeed = 90; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
-const byte turningSpeed = 100;//125
+const byte equilibriumSpeed = 95; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
+const byte turningSpeed = 95;//125
 
 int leftSpeedVal;
 int rightSpeedVal;
@@ -144,7 +144,7 @@ void turnLeft(){
     analogWrite(motor2Speed,turningSpeed);
     goForwardMotor1();
     goBackwardMotor2();
-    targetAngle += 90;
+    targetAngle = angle + 90;
 
 }
 
@@ -153,7 +153,7 @@ void turnRight(){
     analogWrite(motor2Speed,turningSpeed);
     goBackwardMotor1();
     goForwardMotor2();
-    targetAngle -= 90;
+    targetAngle = angle - 90;
 }
 
 void uTurn(){
@@ -161,7 +161,7 @@ void uTurn(){
     analogWrite(motor2Speed,turningSpeed);
     goForwardMotor1();
     goBackwardMotor2();
-    targetAngle += 180;
+    targetAngle = angle + 180;
 
 }
 
@@ -192,24 +192,60 @@ void moveForwardAfterTurn(){
         }else if(isTurnLeft || isUTurn){
             requiredAngle = angle - targetAngle;
         }
+        Serial.println("angle:" + String(angle));
+        Serial.println("requiredAngle:"+String(requiredAngle));
 
-        if(requiredAngle <= 2){
+        if(requiredAngle <= 0){
             continue;
         }else{
             Serial.println(targetAngle);
             stop();
             resetDistance();
+            while(getMovingDistance() < 7){
+                update();
+                if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                    alignLeft();
+                }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                    alignRight();
+                }else{
+                    moveForward();
+                }
+            }
+            stop();
             while(true){
                 float distanceResult = getDistance(FRONT);
                 if((getMovingDistance() <= oneBlockSize + 3) && distanceResult > 8.5){
-                    update();
-                    if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                        alignLeft();
-                    }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                        alignRight();
+                    distance[0] = getDistance(LEFT);
+                    distance[1] = getDistance(RIGHT);
+                    if(distance[0] < 8 || distance[1] < 8){
+                        if(distance[0] < 8){
+                            if(distance[0] < 5){
+                                alignRight();
+                            }else if(distance[0] > 7){
+                                alignLeft();
+                            }else{
+                                moveForward();
+                            }
+                        }else if(distance[1] < 8){
+                            if(distance[1] < 5){
+                                alignLeft();
+                            }else if(distance[1] > 7){
+                                alignRight();
+                            }else{
+                                moveForward();
+                            }
+                        }
                     }else{
-                        moveForwardSlow();
+                        update();
+                        if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                            alignLeft();
+                        }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                            alignRight();
+                        }else{
+                            moveForward();
+                        }
                     }
+
                     continue;
                 }else{
                     stop();
