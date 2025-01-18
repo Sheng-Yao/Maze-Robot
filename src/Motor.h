@@ -76,8 +76,7 @@ bool isInterruptOn = false;
 // Motor movement control
 void moveForward(){
     if(!isInterruptOn){
-        attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
-        attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+        interrupts();
         isInterruptOn = true;
     }
     analogWrite(motor1Speed,equilibriumSpeed);
@@ -89,8 +88,7 @@ void moveForward(){
 // Motor movement control
 void moveForwardSlow(){
     if(!isInterruptOn){
-        attachInterrupt(digitalPinToInterrupt(encoderPinA), counterLeftUpdate, RISING);
-        attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+        interrupts();
         isInterruptOn = true;
     }
     analogWrite(motor1Speed,equilibriumSpeed-10);
@@ -108,8 +106,7 @@ void stop(){
 
 void alignLeft(){
     stop();
-    detachInterrupt(digitalPinToInterrupt(encoderPinA));
-    detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    noInterrupts();
     isInterruptOn = false;
     leftSpeedVal = turningSpeed;
     rightSpeedVal = turningSpeed;
@@ -122,8 +119,7 @@ void alignLeft(){
 
 void alignRight(){
     stop();
-    detachInterrupt(digitalPinToInterrupt(encoderPinA));
-    detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    noInterrupts();
     isInterruptOn = false;
     leftSpeedVal = turningSpeed;
     rightSpeedVal = turningSpeed;
@@ -179,7 +175,7 @@ void moveCloseToWall(){
     }
 }
 
-const float oneBlockSize = 20;
+const float oneBlockSize = 38;
 
 float distance[3] = {0,0,0};
 
@@ -192,8 +188,8 @@ void moveForwardAfterTurn(){
         }else if(isTurnLeft || isUTurn){
             requiredAngle = angle - targetAngle;
         }
-        Serial.println("angle:" + String(angle));
-        Serial.println("requiredAngle:"+String(requiredAngle));
+        // Serial.println("angle:" + String(angle));
+        // Serial.println("requiredAngle:"+String(requiredAngle));
 
         if(requiredAngle <= 0){
             continue;
@@ -201,7 +197,7 @@ void moveForwardAfterTurn(){
             Serial.println(targetAngle);
             stop();
             resetDistance();
-            while(getMovingDistance() < 7){
+            while(getMovingDistance() < 15){
                 update();
                 if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                     alignLeft();
@@ -214,12 +210,12 @@ void moveForwardAfterTurn(){
             stop();
             while(true){
                 float distanceResult = getDistance(FRONT);
-                if((getMovingDistance() <= oneBlockSize + 3) && distanceResult > 8.5){
+                if((getMovingDistance() <= oneBlockSize + 10) && distanceResult > 8.5){
                     distance[0] = getDistance(LEFT);
                     distance[1] = getDistance(RIGHT);
                     if(distance[0] < 8 || distance[1] < 8){
                         if(distance[0] < 8){
-                            if(distance[0] < 5){
+                            if(distance[0] < 5.5){
                                 alignRight();
                             }else if(distance[0] > 7){
                                 alignLeft();
@@ -227,7 +223,7 @@ void moveForwardAfterTurn(){
                                 moveForward();
                             }
                         }else if(distance[1] < 8){
-                            if(distance[1] < 5){
+                            if(distance[1] < 5.5){
                                 alignLeft();
                             }else if(distance[1] > 7){
                                 alignRight();
@@ -237,9 +233,9 @@ void moveForwardAfterTurn(){
                         }
                     }else{
                         update();
-                        if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                        if(angle < targetAngle - 3){
                             alignLeft();
-                        }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                        }else if(angle > targetAngle + 3){
                             alignRight();
                         }else{
                             moveForward();

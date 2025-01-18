@@ -4,7 +4,7 @@
 void setup(){
 
   // Initialize serial monitor
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   encoderSetup();
   
@@ -52,7 +52,7 @@ void loop(){
       }
     }else{
       float ultrasonicResult = getDistance(FRONT);
-      if((getMovingDistance() > oneBlockSize - 0.5 && (int(ultrasonicResult) % 20 > 5 && int(ultrasonicResult) % 20 < 11) ) || ultrasonicResult < 8){
+      if((getMovingDistance() > oneBlockSize + 2 && (int(ultrasonicResult) % 20 > 6 && int(ultrasonicResult) % 20 < 12) ) || ultrasonicResult < 8){
         Serial.print(getMovingDistance());
         Serial.print("  " + String(int(ultrasonicResult) % 20));
         Serial.print("  " + String(ultrasonicResult));
@@ -71,9 +71,9 @@ void loop(){
           Serial.println("distanceDifference:"+String(distanceDifference));
           if(distanceDifference <= -2.5){
             if(distanceDifference <= -10.0){
-              if(distance[0] < 4){
+              if(distance[0] < 4.5){
                 alignRight();
-              }else if(distance[0] > 5 && distance[0] < 6.5){
+              }else if(distance[0] > 6 && distance[0] <= 8){
                 alignLeft();
               }else{
                 moveForward();
@@ -88,9 +88,9 @@ void loop(){
             }
           }else if(distanceDifference >= 2.5){
             if(distanceDifference >= 10.0){
-              if(distance[1] < 4){
+              if(distance[1] < 4.5){
                 alignLeft();
-              }else if(distance[1] > 5 && distance[1] < 6.5){
+              }else if(distance[1] > 6 && distance[1] <= 8){
                 alignRight();
               }else{
                 if(distance[0] > mazeWidth + 5 && distance[1] > mazeWidth + 5){
@@ -128,7 +128,7 @@ void loop(){
 
   if(isReachPoint){
 
-    delay(500);
+    delay(250);
 
     if(maps[xPosition][yPosition] == "0"){
 

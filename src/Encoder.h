@@ -25,17 +25,15 @@ void encoderSetup(){
   attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
 }
 
-
+const float wheelCircumference = 0.05 * PI * 0.0325 * 100;
 
 float getMovingDistance(){
-    detachInterrupt(digitalPinToInterrupt(encoderPinA));
-    detachInterrupt(digitalPinToInterrupt(encoderPinB));
+    noInterrupts();
 
-    float distance = ((pulsesLeft + pulsesRight) / 2) * 0.05 * PI * (0.0325) * 100;
+    float distance = ((pulsesLeft + pulsesRight) / 2) * wheelCircumference;
 
    //Restart the interrupt processing
-    attachInterrupt((encoderPinA), counterLeftUpdate, RISING);
-    attachInterrupt(digitalPinToInterrupt(encoderPinB), counterRightUpdate, RISING);
+    interrupts();
 
     return distance;
 }

@@ -17,18 +17,17 @@ float yaw;
 float angle = 0;
 float targetAngle = 0;
 
+const float GYRO_SCALE = 1.0 / 131.0;
+
 bool getOrientation(){
   // Reset variable holder for X, Y
   gyroOutputBuffer = 0;
 
   Wire.beginTransmission(MPU);
-  Wire.write(0x43);
+  Wire.write(0x47);
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU, 6, true);
-  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;
-  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;
-  gyroOutputBuffer = 0;
-  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) / 131.0;  // get z rotation (yaw)
+  Wire.requestFrom(MPU, 2, true);
+  gyroOutputBuffer = (Wire.read() << 8 | Wire.read()) * GYRO_SCALE;  // get z rotation (yaw)
 
   if(gyroOutputBuffer != 0){
     return true;
@@ -56,6 +55,7 @@ void calculateError() {
 
 void mpuSetup(){
   Wire.begin();                      // Initialize comunication
+  // Wire.setClock(400000); // Set I2C speed to 400 kHz (Fast Mode)
   Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
   Wire.write(0x6B);                  // Talk to the register 6B
   Wire.write(0x00);                  // Make reset - place a 0 into the 6B register
@@ -69,7 +69,7 @@ void update(){
     // === Read gyroscope (on the MPU6050) data === //
     previousTime = currentTime;
     currentTime = millis();
-    elapsedTime = (currentTime - previousTime) / 1000; // Divide by 1000 to get seconds
+    elapsedTime = (currentTime - previousTime) * 0.001; // Divide by 1000 to get seconds
     getOrientation();
     // Correct the outputs with the calculated error values
     gyroOutputBuffer -= GyroErrorZ;
