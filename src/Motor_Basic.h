@@ -10,6 +10,13 @@
 #define motor2A 5
 #define motor2B 4
 
+// Motor speed control
+const byte maxSpeed = 255;
+const byte equilibriumSpeed = 95; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
+const byte turningSpeed = 125; //125
+
+int leftSpeedVal;
+int rightSpeedVal;
 
 // Motor 1 movement
 void resetMotor1(){
@@ -42,4 +49,25 @@ void goForwardMotor2(){
 void goBackwardMotor2(){
     digitalWrite(motor2A,LOW);
     digitalWrite(motor2B,HIGH);
+}
+
+
+void motorSetup(){
+    // Pins setup
+    pinMode(motor1Speed, OUTPUT);
+    pinMode(motor2Speed, OUTPUT);
+    pinMode(motor1A, OUTPUT);
+    pinMode(motor1B, OUTPUT);
+    pinMode(motor2A, OUTPUT);
+    pinMode(motor2B, OUTPUT);
+
+    // Motor speed setup
+    leftSpeedVal = equilibriumSpeed;
+    rightSpeedVal = equilibriumSpeed;
+    analogWrite(motor1Speed,rightSpeedVal);
+    analogWrite(motor2Speed,leftSpeedVal);
+
+    // Motor direction setup
+    resetMotor1();
+    resetMotor2();
 }

@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-// Car position variable selections (Can be view based on fixed positions)
+// Car position values (Can be view based on fixed positions)
 enum Mode{
     FORWARD,
     BACKWARD,
@@ -9,15 +9,18 @@ enum Mode{
 };
 
 // Current car orientation; initial = FORWARD
-Mode currentMode = FORWARD;// initial = FORWARD
+Mode currentMode = FORWARD;
 
 // Current car position; initial at (0,0)
 byte xPosition = 0;
 byte yPosition = 0;
 
+// Blocks in each side
+const byte side = 4;
+
 // Maze sizing (x,y)
-const byte PUZZLE_X = 4;
-const byte PUZZLE_Y = 4;
+const byte PUZZLE_X = side;
+const byte PUZZLE_Y = side;
 
 String maps[PUZZLE_X][PUZZLE_Y] = {
     {"0","0","0","0"},
@@ -35,7 +38,7 @@ void printMaps(){
         // Print elements in a line (x-axis)
         for(byte i = 0; i < PUZZLE_X; i++){
             Serial.print(maps[i][j]);
-            if(i != 4){
+            if(i != side - 1){
                 Serial.print(",");
             }
         }
@@ -45,4 +48,5 @@ void printMaps(){
     Serial.println();
 }
 
+// String message that used in solving maze in second part of the program
 String finalSolution = "";

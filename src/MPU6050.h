@@ -9,7 +9,8 @@ const int MPU = 0x68; // MPU6050 I2C address
 // SCL -> A5 
 // SDA -> A4 
 
-float elapsedTime, currentTime, previousTime;
+float elapsedTime, previousTime;
+float currentTime = millis();
 float GyroErrorZ;
 float gyroOutputBuffer = 0;
 float yaw;

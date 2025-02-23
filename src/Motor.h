@@ -5,31 +5,9 @@
 #include <Encoder.h>
 #include <Ultrasonic.h>
 
-// Motor speed control
-const byte maxSpeed = 255;
-const byte equilibriumSpeed = 95; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
-const byte turningSpeed = 125; //125
-
-int leftSpeedVal;
-int rightSpeedVal;
 
 bool isReachPoint = false;
 
-void motorSetup(){
-    pinMode(motor1Speed, OUTPUT);
-    pinMode(motor2Speed, OUTPUT);
-    pinMode(motor1A, OUTPUT);
-    pinMode(motor1B, OUTPUT);
-    pinMode(motor2A, OUTPUT);
-    pinMode(motor2B, OUTPUT);
-    leftSpeedVal = equilibriumSpeed;
-    rightSpeedVal = equilibriumSpeed;
-    analogWrite(motor1Speed,rightSpeedVal);
-    analogWrite(motor2Speed,leftSpeedVal);
-    resetMotor1();
-    resetMotor2();
-    currentTime = millis();
-}
 
 bool isInterruptOn = false;
 
