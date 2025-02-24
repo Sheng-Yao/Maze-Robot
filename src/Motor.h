@@ -1,187 +1,140 @@
 #include <Arduino.h>
 #include <Motor_Basic.h>
 #include <math.h>
-#include <MPU6050.h>
-#include <Encoder.h>
 #include <Ultrasonic.h>
+#include <Encoder.h>
+#include <MPU6050.h>
 
+byte checkingDuration = 25;
 
-bool isReachPoint = false;
-
-
-bool isInterruptOn = false;
-
-// Motor movement control
-void moveForward(){
-    if(!isInterruptOn){
-        interrupts();
-        isInterruptOn = true;
-    }
-    analogWrite(motor1Speed,equilibriumSpeed);
-    analogWrite(motor2Speed,equilibriumSpeed);
-    goForwardMotor1();
-    goForwardMotor2();
-}
-
-// Motor movement control
-void moveForwardSlow(){
-    if(!isInterruptOn){
-        interrupts();
-        isInterruptOn = true;
-    }
-    analogWrite(motor1Speed,equilibriumSpeed-10);
-    analogWrite(motor2Speed,equilibriumSpeed-10);
-    goForwardMotor1();
-    goForwardMotor2();
-}
-
-void stop(){
-    analogWrite(motor1Speed,equilibriumSpeed);
-    analogWrite(motor2Speed,equilibriumSpeed);
-    resetMotor1();
-    resetMotor2();
-}
-
-void alignLeft(){
-    stop();
-    noInterrupts();
-    isInterruptOn = false;
-    leftSpeedVal = turningSpeed;
-    rightSpeedVal = turningSpeed;
-    analogWrite(motor1Speed,rightSpeedVal);
-    analogWrite(motor2Speed,leftSpeedVal);
-    goForwardMotor1();
-    goBackwardMotor2();
-}
-
-
-void alignRight(){
-    stop();
-    noInterrupts();
-    isInterruptOn = false;
-    leftSpeedVal = turningSpeed;
-    rightSpeedVal = turningSpeed;
-    analogWrite(motor1Speed,rightSpeedVal);
-    analogWrite(motor2Speed,leftSpeedVal);
-    // resetMotor1();
-    goBackwardMotor1();
-    goForwardMotor2();
-}
-
-
-bool isTurnLeft = false;
-bool isTurnRight = false;
-bool isUTurn = false;
-void turnLeft(){
-    analogWrite(motor1Speed,turningSpeed);
-    analogWrite(motor2Speed,turningSpeed);
-    goForwardMotor1();
-    goBackwardMotor2();
-    targetAngle = angle + 90;
-}
-void turnRight(){
-    analogWrite(motor1Speed,turningSpeed);
-    analogWrite(motor2Speed,turningSpeed);
-    goBackwardMotor1();
-    goForwardMotor2();
-    targetAngle = angle - 90;
-}
-void uTurn(){
-    analogWrite(motor1Speed,turningSpeed);
-    analogWrite(motor2Speed,turningSpeed);
-    goForwardMotor1();
-    goBackwardMotor2();
-    targetAngle = angle + 185;
-}
-
-
-
+// Ensure robot car move to checking point in each block
 void moveCloseToWall(){
+    unsigned long previous = millis();
     while(true){
-        if(getDistance(FRONT) <= 5.75){
-            stop();
-            break;
-        }else{
-            moveForwardSlow();
-            continue;
+        if(millis() - previous >= checkingDuration){
+            float frontDistance = getDistance(FRONT);
+            if(int(frontDistance) % 28 <= 4 || frontDistance <= 5){
+                stop();
+                break;
+            }else{
+                moveForward();
+                continue;
+            }
+            previous = millis();
         }
     }
 }
 
-const float oneBlockSize = 35;
+void moveForwardWithAlignment();
 
-float distance[3] = {0,0,0};
+void turnAndMoveForward(){
 
-void moveForwardAfterTurn(){
+    unsigned long previous = millis();
+
     while(true){
+        // Update the robot car angle
         update();
+
         float requiredAngle;
         if(isTurnRight){
             requiredAngle = targetAngle - angle;
         }else if(isTurnLeft || isUTurn){
             requiredAngle = angle - targetAngle;
         }
-        // Serial.println("angle:" + String(angle) + " requiredAngle:"+String(requiredAngle));
+        Serial.println("targetAngle:" + String(targetAngle) + "angle:" + String(angle) + " requiredAngle:"+String(requiredAngle));
 
-        if(requiredAngle <= 0){
-            continue;
-        }else{
-            Serial.println(targetAngle);
-            stop();
-            resetDistance();
-            while(getMovingDistance() < 15){
-                update();
-                if(angle < targetAngle - 3){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                    alignLeft();
-                }else if(angle > targetAngle + 3){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                    alignRight();
-                }else{
-                    moveForward();
-                }
+        if(millis() - previous >= checkingDuration){
+            if(requiredAngle < 0){
+                continue;
+            }else{
+                // Done turning
+                stop();
+                resetDistance();
+
+                moveForwardWithAlignment();
             }
-            stop();
-            while(true){
-                float distanceResult = getDistance(FRONT);
-                if((getMovingDistance() <= oneBlockSize + 10) && distanceResult > 8.5){
-                    distance[0] = getDistance(LEFT);
-                    distance[1] = getDistance(RIGHT);
-                    if(distance[0] < 8 || distance[1] < 8){
-                        if(distance[0] < 8){
-                            if(distance[0] < 5.5){
-                                alignRight();
-                            }else if(distance[0] > 7){
-                                alignLeft();
-                            }else{
-                                moveForward();
-                            }
-                        }else if(distance[1] < 8){
-                            if(distance[1] < 5.5){
-                                alignLeft();
-                            }else if(distance[1] > 7){
-                                alignRight();
-                            }else{
-                                moveForward();
-                            }
+            previous = millis();
+        }
+    }
+}
+
+const float ultrasonicMazeSize = 20;
+const float encoderMazeSize = 35;
+
+const float lowerAlignmentValue = 4.5;
+const float upperAlignmentValue = 6.5;
+const float alignmentValueDifference = 1;
+
+bool isReachPoint = false;
+
+void moveForwardWithAlignment(){
+    
+    unsigned long previous = millis();
+
+    while(true){
+
+        if(millis() - previous <= checkingDuration){
+            
+            float distance[3] = {0,0,0};
+            distance[0] = getDistance(LEFT);
+            distance[1] = getDistance(RIGHT);
+            distance[2] = getDistance(FRONT);
+
+            if(distance[2] > 5 || (int(distance[2]) % 28 >= 4 && getMovingDistance() < encoderMazeSize)){
+                // If no branch at left and right
+                if(distance[0] < ultrasonicMazeSize && distance[1] < ultrasonicMazeSize){
+                    if(distance[0] > distance[1] + alignmentValueDifference){
+                        alignLeft();
+                    }else if(distance[1] > distance[0] + alignmentValueDifference){
+                        alignRight();
+                    }else{
+                        moveForward();
+                    }
+                }else if(distance[0] > ultrasonicMazeSize && distance[1] < ultrasonicMazeSize){// When has left branch
+                    if(distance[1] < lowerAlignmentValue){
+                        alignLeft();
+                    }else if(distance[1] > upperAlignmentValue){
+                        alignRight();
+                    }else{
+                        moveForward();
+                    }
+                }else if(distance[0] < ultrasonicMazeSize && distance[1] > ultrasonicMazeSize){// WHen has right branch
+                    if(distance[0] < lowerAlignmentValue){
+                        alignRight();
+                    }else if(distance[0] > upperAlignmentValue){
+                        alignLeft();
+                    }else{
+                        moveForward();
+                    }
+                }else if(distance[0] > ultrasonicMazeSize && distance[1] > ultrasonicMazeSize){// when left and right has branch
+                    // Update the robot car angle
+                    update();
+
+                    float requiredAngle;
+                    if(isTurnRight){
+                        requiredAngle = targetAngle - angle;
+                    }else if(isTurnLeft || isUTurn){
+                        requiredAngle = angle - targetAngle;
+                    }
+
+                    if(requiredAngle < 0){
+                        if(angle < targetAngle){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                            alignLeft();
+                        }else if(angle > targetAngle){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                            alignRight();
                         }
                     }else{
-                        update();
-                        if(angle < targetAngle - 3){
-                            alignLeft();
-                        }else if(angle > targetAngle + 3){
-                            alignRight();
-                        }else{
-                            moveForward();
-                        }
+                        moveForward();
                     }
-                    delay(10);
-                    continue;
-                }else{
-                    stop();
-                    break;
                 }
+            }else{
+                stop();
+                resetDistance();
+                isReachPoint = true;
+                break;
+                Serial.println("Detection location reached.");
             }
-            isReachPoint = true;
-            break;
+            previous = millis();
         }
     }
 }

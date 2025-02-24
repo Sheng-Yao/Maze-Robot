@@ -1,6 +1,7 @@
 #include <Motor.h>
 #include <Path_Finder.h>
 
+// Flag to switch between Mapping and Solving the maze
 bool isSolving = false;
 
 void setup(){
@@ -25,136 +26,73 @@ void setup(){
 
 // State control of car movement (Stop when initial / block reached / end)
 bool isMoving = false;
-const byte mazeWidth = 20;
-
-
-// Timer (To avoid using delay)
-unsigned long current = millis();
 
 void loop(){
   // Stop when front distance smaller than 2cm
-  if(getDistance(FRONT) > 2){
+  if(getDistance(FRONT) > 4){
     // If car is not moving
     if(!isMoving){
       // Check variable holder whether the car need to turn
       if(isTurnLeft || isTurnRight || isUTurn){
         if(isTurnRight){
           // Control motor state
-          turnRight();
+          turnRight(angle);
           // Completing the turning and forward action
-          moveForwardAfterTurn();
+          turnAndMoveForward();
           // Reset the variable once completed
           isTurnRight = false;
         }else if(isTurnLeft){
           // Control motor state
-          turnLeft();
+          turnLeft(angle);
           // Completing the turning and forward action
-          moveForwardAfterTurn();
+          turnAndMoveForward();
           // Reset the variable once completed
           isTurnLeft = false;
         }else if(isUTurn){
           // Control motor state
-          uTurn();
+          uTurn(angle);
           // Completing the turning and forward action
-          moveForwardAfterTurn();
+          turnAndMoveForward();
           // Reset the variable once completed
           isUTurn = false;
         }
       }
       // Will enter here when robot finished the turning task
       else{
+        resetDistance();
         moveForward();
         isMoving = true;
-        resetDistance();
       }
     }
     // Will enter here when robot is moving between blocks
     else{
-      float ultrasonicResult = getDistance(FRONT);
-      if((getMovingDistance() > oneBlockSize + 2 && (int(ultrasonicResult) % 20 > 6 && int(ultrasonicResult) % 20 < 12) ) || ultrasonicResult < 8){
-        Serial.print(getMovingDistance());
-        Serial.print("  " + String(int(ultrasonicResult) % 20));
-        Serial.print("  " + String(ultrasonicResult));
-        Serial.println();
-        stop();
-        isMoving = false;
-        isReachPoint = true;
-      }else{
-        //Moving forward + Align
-        if(millis() - current > 25){
-          distance[0] = getDistance(LEFT);
-          distance[1] = getDistance(RIGHT);
-          float distanceDifference = distance[0] - distance[1];
-          if(distanceDifference <= -2.5){
-            Serial.println(String(distance[0]) + " | " + String(distance[1]) + " | " + String(distanceDifference));
-            if(distanceDifference <= -10.0){
-              if(distance[0] < 4.5){
-                alignRight();
-              }else if(distance[0] > 6 && distance[0] <= 8){
-                alignLeft();
-              }else{
-                moveForward();
-              }
-            }else{
-              alignRight();
-            }
-          }else if(distanceDifference >= 2.5){
-            Serial.println(String(distance[0]) + " | " + String(distance[1]) + " | " + String(distanceDifference));
-            if(distanceDifference >= 10.0){
-              if(distance[1] < 4.5){
-                alignLeft();
-              }else if(distance[1] > 6 && distance[1] <= 8){
-                alignRight();
-              }else{
-                // if(distance[0] > mazeWidth + 5 && distance[1] > mazeWidth + 5){
-                //   update();
-                //   if(angle < targetAngle - 4){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                //     alignLeft();
-                //   }else if(angle > targetAngle + 4){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                //     alignRight();
-                //   }else{
-                //     moveForward();
-                //   }
-                //   delay(20);
-                // }else{
-                //   moveForward();
-                // }
-                moveForward();
-              }
-            }else{
-              alignLeft();
-            }
-          }
-          else{
-            moveForward();
-          }
-          current = millis();
-        }
-      }
+      moveForwardWithAlignment();
     }
   }else{
-    Serial.println(String(pulsesLeft - pulsesRight));
-    Serial.println(String(pulsesLeft + pulsesRight));
-    Serial.println(String(getMovingDistance()));
+    Serial.println("Program stopped. Front Distance < 4cm");
     stop();
     while(1){;}
   }
 
   // Reach detection point
   if(isReachPoint){
+    
+    stop();
+    delay(500);
 
-    delay(20);
+    float distance[3] = {0,0,0};
+    // Detect branches
+    distance[0] = getDistance(LEFT);
+    distance[1] = getDistance(RIGHT);
+    distance[2] = getDistance(FRONT);
     
     if(!isSolving){
       // Check if the position is reached before
       if(maps[xPosition][yPosition] == "0"){
-        // Detect branches
-        distance[0] = getDistance(LEFT);
-        distance[1] = getDistance(RIGHT);
-        distance[2] = getDistance(FRONT);
+
 
         // 1 branch
-        if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){// Dead End (X)
+        if(distance[0] < ultrasonicMazeSize && distance[1] < ultrasonicMazeSize && distance[2] < ultrasonicMazeSize){// Dead End (X)
           Serial.println("Dead End (X)");
           moveCloseToWall();
           isUTurn = true;
@@ -175,7 +113,7 @@ void loop(){
             currentMode = LEFT_DIRECTION;
             xPosition--;
           }
-        }else if(distance[0] < mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){// Front (F)
+        }else if(distance[0] < ultrasonicMazeSize && distance[1] < ultrasonicMazeSize && distance[2] > ultrasonicMazeSize){// Front (F)
           Serial.println("Front (F)");
           isTurnLeft = false;
           isTurnRight = false;
@@ -191,7 +129,7 @@ void loop(){
           }else if(currentMode == RIGHT_DIRECTION){
             xPosition++;
           }
-        }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] < mazeWidth){// Left (L)
+        }else if(distance[0] > ultrasonicMazeSize && distance[1] < ultrasonicMazeSize && distance[2] < ultrasonicMazeSize){// Left (L)
           Serial.println("Left (L)");
           moveCloseToWall();
           isTurnLeft = true;
@@ -212,7 +150,7 @@ void loop(){
             currentMode = FORWARD;
             yPosition++;
           }
-        }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){// Right (R)
+        }else if(distance[0] < ultrasonicMazeSize && distance[1] > ultrasonicMazeSize && distance[2] < ultrasonicMazeSize){// Right (R)
           Serial.println("Right (R)");
           moveCloseToWall();
           isTurnRight = true;
@@ -235,7 +173,7 @@ void loop(){
           }
         }
         // 2 branches
-        else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] < mazeWidth){// Left and Right (LR)
+        else if(distance[0] > ultrasonicMazeSize && distance[1] > ultrasonicMazeSize && distance[2] < ultrasonicMazeSize){// Left and Right (LR)
           Serial.println("Left and Right (LR)");
           moveCloseToWall();
           isTurnLeft = true;
@@ -256,7 +194,7 @@ void loop(){
             currentMode = FORWARD;
             yPosition++;
           }
-        }else if(distance[0] > mazeWidth && distance[1] < mazeWidth && distance[2] > mazeWidth){// Front and Left (FL)
+        }else if(distance[0] > ultrasonicMazeSize && distance[1] < ultrasonicMazeSize && distance[2] > ultrasonicMazeSize){// Front and Left (FL)
           Serial.println("Front and Left (FL)");
           isTurnLeft = false;
           isTurnRight = false;
@@ -276,7 +214,7 @@ void loop(){
             currentMode = RIGHT_DIRECTION;
             xPosition++;
           }
-        }else if(distance[0] < mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){// Front and Right (FR)
+        }else if(distance[0] < ultrasonicMazeSize && distance[1] > ultrasonicMazeSize && distance[2] > ultrasonicMazeSize){// Front and Right (FR)
           Serial.println("Front and Right (FR)");
           isTurnLeft = false;
           isTurnRight = false;
@@ -297,27 +235,6 @@ void loop(){
             xPosition++;
           }
         }
-        // else if(distance[0] > mazeWidth && distance[1] > mazeWidth && distance[2] > mazeWidth){
-        //   Serial.println("Front, Left and Right branches");
-        //   isTurnLeft = false;
-        //   isTurnRight = false;
-        //   isUTurn = false;
-        //   maps[xPosition][yPosition] = "FLR";
-        //   Serial.println("(" + String(xPosition) + "," + String(yPosition) + ")");
-        //   if(currentMode == FORWARD){
-        //     currentMode = FORWARD;
-        //     yPosition++;
-        //   }else if(currentMode == BACKWARD){
-        //     currentMode = BACKWARD;
-        //     yPosition--;
-        //   }else if(currentMode == LEFT_DIRECTION){
-        //     currentMode = LEFT_DIRECTION;
-        //     xPosition--;
-        //   }else if(currentMode == RIGHT_DIRECTION){
-        //     currentMode = RIGHT_DIRECTION;
-        //     xPosition++;
-        //   }
-        // }
       }
       // Will enter here if the block reached before or is in solving mode
       else{
@@ -492,18 +409,6 @@ void loop(){
             xPosition++;
           }
         }
-        // }else if(maps[xPosition][yPosition] == "FLR"){
-        //   if(currentMode == BACKWARD){
-        //     if(maps[xPosition][yPosition - 1] == "X"){
-        //       maps[xPosition][yPosition] = "LR";
-        //     }
-        //     isTurnRight = true;
-        //     isTurnLeft = false;
-        //     isUTurn = false;
-        //     currentMode = LEFT_DIRECTION;
-        //     xPosition--;
-        //   }
-        // }
         // 1 branch
       }
     }else{
@@ -577,8 +482,6 @@ void loop(){
     isMoving = false;
     isReachPoint = false;
 
-    delay(1000);
-
     // ending point
     if(xPosition == PUZZLE_X - 1 && yPosition == PUZZLE_Y - 1){
       Serial.println("Reached End Point");
@@ -594,7 +497,5 @@ void loop(){
 
     // Print the current maps
     printMaps();
-    
-    currentTime = millis();
   }
 }

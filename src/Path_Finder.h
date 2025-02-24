@@ -2,9 +2,10 @@
 #include <Mapping.h>
 #include <EEPROM_Fun.h>
 
+// Initial point of obtaining the solution
 byte xPos = 0;
 byte yPos = 0;
-
+// Initial orientation
 Mode solvingMode = FORWARD;
 
 String maze_Solving(String str[PUZZLE_X][PUZZLE_Y]){

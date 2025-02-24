@@ -12,6 +12,7 @@
 #define rightTrig 12
 #define rightEcho 13
 
+// Setup ultrasonic sensor
 void ultrasonicSetup(){
     pinMode(leftEcho, INPUT);
     pinMode(leftTrig, OUTPUT);
