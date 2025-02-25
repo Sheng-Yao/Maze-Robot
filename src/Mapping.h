@@ -26,7 +26,7 @@ String maps[PUZZLE_X][PUZZLE_Y] = {
     {"0","0","0","0"},
     {"0","0","0","0"},
     {"0","0","0","0"},
-    {"0","0","0","0"}
+    {"0","0","0","0"},
 };
 
 // Print the 3x3 matrix maps (ease of trobleshooting)

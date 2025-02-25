@@ -44,14 +44,13 @@ void alignLeft(){
         noInterrupts();
         isInterruptOn = false;
     }
-    leftSpeedVal = equilibriumSpeed;
-    rightSpeedVal = equilibriumSpeed;
+    leftSpeedVal = equilibriumSpeed+5;
+    rightSpeedVal = equilibriumSpeed+5;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
     goForwardMotor1();
     goBackwardMotor2();
 }
-
 
 void alignRight(){
     stop();
@@ -59,8 +58,8 @@ void alignRight(){
         noInterrupts();
         isInterruptOn = false;
     }
-    leftSpeedVal = equilibriumSpeed;
-    rightSpeedVal = equilibriumSpeed;
+    leftSpeedVal = equilibriumSpeed+5;
+    rightSpeedVal = equilibriumSpeed+5;
     analogWrite(motor1Speed,rightSpeedVal);
     analogWrite(motor2Speed,leftSpeedVal);
     goBackwardMotor1();
@@ -102,7 +101,7 @@ void uTurn(){
 
 void moveCloseToWall(){
     while(true){
-        if(getDistance(FRONT) <= 5.5){
+        if(getDistance(FRONT) <= 6){
             stop();
             break;
         }else{
@@ -139,16 +138,16 @@ void moveForwardAfterTurn(){
             Serial.println(targetAngle);
             stop();
             resetDistance();
-            while(getMovingDistance() < 15){
+            while(getMovingDistance() < 20){
                 if(millis()-current > 30){
-                    if(getMovingDistance() < 15){
+                    if(getMovingDistance() < 20){
                         update();
                         Serial.print(String(angle) + " ");
-                        if(angle < 0){
-                            if(angle < targetAngle - 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                        if(targetAngle < 0){
+                            if(angle - targetAngle < -5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                                 Serial.println("Align Left");
                                 alignLeft();
-                            }else if(angle > targetAngle + 5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                            }else if(angle - targetAngle > 5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
                                 Serial.println("Align Right");
                                 alignRight();
                             }else{
@@ -156,12 +155,12 @@ void moveForwardAfterTurn(){
                                 moveForward();
                             }
                         }else{
-                            if(angle < targetAngle + 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                                Serial.println("Align Left");
-                                alignLeft();
-                            }else if(angle > targetAngle - 5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                            if(angle - targetAngle > 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                                 Serial.println("Align Right");
                                 alignRight();
+                            }else if(angle - targetAngle  < -5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                                Serial.println("Align Left");
+                                alignLeft();
                             }else{
                                 Serial.println("Move Forward");
                                 moveForward();
@@ -176,7 +175,7 @@ void moveForwardAfterTurn(){
             current = millis();
             while(true){
                 float ultrasonicResult = getDistance(FRONT);
-                if((getMovingDistance() > 30 && int(ultrasonicResult) % 27 <= 4) || ultrasonicResult < 5.5){
+                if((getMovingDistance() > 30 && int(ultrasonicResult) % 27 <= 4) || ultrasonicResult < 6){
                   Serial.print(getMovingDistance());
                   Serial.print("  " + String(int(ultrasonicResult) % 27));
                   Serial.print("  " + String(ultrasonicResult));
@@ -187,7 +186,7 @@ void moveForwardAfterTurn(){
                   break;
                 }else{
                   //Moving forward + Align
-                  if(millis() - current > 25){
+                  if(millis() - current > 30){
                     distance[0] = getDistance(LEFT);
                     distance[1] = getDistance(RIGHT);
           
@@ -205,10 +204,10 @@ void moveForwardAfterTurn(){
                           moveForward();
                         }
                       }else if(distance[0] < mazeWidth && distance[1] > mazeWidth){
-                        if(distance[0] < 5){
+                        if(distance[0] < 6){
                           Serial.println("Align Right");
                           alignRight();
-                        }else if(distance[0] > 6.5){
+                        }else if(distance[0] > 8){
                           Serial.println("Align Left");
                           alignLeft();
                         }else{
@@ -216,10 +215,10 @@ void moveForwardAfterTurn(){
                           moveForward();
                         }
                       }else if(distance[0] > mazeWidth && distance[1] < mazeWidth){
-                        if(distance[1] < 5){
+                        if(distance[1] < 6){
                           Serial.println("Align Left");
                           alignLeft();
-                        }else if(distance[1] > 6.5){
+                        }else if(distance[1] > 8){
                           Serial.println("Align Right");
                           alignRight();
                         }else{
@@ -229,11 +228,12 @@ void moveForwardAfterTurn(){
                       }else{
                         Serial.println("Enter 1");
                         update();
+                        Serial.print(String(angle) + " ");
                         if(angle < 0){
-                            if(angle < targetAngle - 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                            if(angle - targetAngle < -10){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                                 Serial.println("Align Left");
                                 alignLeft();
-                            }else if(angle > targetAngle + 5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                            }else if(angle - targetAngle > 10){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
                                 Serial.println("Align Right");
                                 alignRight();
                             }else{
@@ -241,12 +241,12 @@ void moveForwardAfterTurn(){
                                 moveForward();
                             }
                         }else{
-                            if(angle < targetAngle + 8){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                                Serial.println("Align Left");
-                                alignLeft();
-                            }else if(angle > targetAngle - 8){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                            if(angle - targetAngle > 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
                                 Serial.println("Align Right");
                                 alignRight();
+                            }else if(angle - targetAngle  < -5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                                Serial.println("Align Left");
+                                alignLeft();
                             }else{
                                 Serial.println("Move Forward");
                                 moveForward();

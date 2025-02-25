@@ -12,8 +12,8 @@
 
 // Motor speed control
 // const byte maxSpeed = 255;
-const byte equilibriumSpeed = 105; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
-const byte turningSpeed = 150; //125
+const byte equilibriumSpeed = 255;// 105
+const byte turningSpeed = 255; // 150
 
 int leftSpeedVal;
 int rightSpeedVal;

@@ -11,8 +11,8 @@
 #define motor2B 4
 
 // Motor speed control
-const byte equilibriumSpeed = 95; //rough estimate of PWM at the speed pin of the stronger motor, while driving straight // 155
-const byte turningSpeed = 150;
+const byte equilibriumSpeed = 105;// 95
+const byte turningSpeed = 150;// 150
 
 int leftSpeedVal;
 int rightSpeedVal;

@@ -1,5 +1,5 @@
 #include <Motor.h>
-#include <Mapping.h>
+#include <Path_Finder.h>
 
 void setup(){
 
@@ -16,9 +16,13 @@ void setup(){
   Serial.println("Done setup..");
 
   delay(1000);
+
+  while(1){;}
 }
 
+
 void loop(){
+
   if(getDistance(FRONT) > 2){
     if(!isMoving){
       if(isTurnLeft || isTurnRight || isUTurn){
@@ -43,7 +47,7 @@ void loop(){
       }
     }else{
       float ultrasonicResult = getDistance(FRONT);
-      if((getMovingDistance() > 30 && int(ultrasonicResult) % 27 <= 4) || ultrasonicResult < 5.5){
+      if((getMovingDistance() > 30 && int(ultrasonicResult) % 27 <= 4) || ultrasonicResult < 6){
         Serial.print(getMovingDistance());
         Serial.print("  " + String(int(ultrasonicResult) % 27));
         Serial.print("  " + String(ultrasonicResult));
@@ -53,7 +57,7 @@ void loop(){
         isReachPoint = true;
       }else{
         //Moving forward + Align
-        if(millis() - current > 35){
+        if(millis() - current > 30){
           distance[0] = getDistance(LEFT);
           distance[1] = getDistance(RIGHT);
 
@@ -71,10 +75,10 @@ void loop(){
               moveForward();
             }
           }else if(distance[0] < mazeWidth && distance[1] > mazeWidth){
-            if(distance[0] < 5){
+            if(distance[0] < 6){
               Serial.println("Align Right");
               alignRight();
-            }else if(distance[0] > 6.5){
+            }else if(distance[0] > 8){
               Serial.println("Align Left");
               alignLeft();
             }else{
@@ -82,10 +86,10 @@ void loop(){
               moveForward();
             }
           }else if(distance[0] > mazeWidth && distance[1] < mazeWidth){
-            if(distance[1] < 5){
+            if(distance[1] < 6){
               Serial.println("Align Left");
               alignLeft();
-            }else if(distance[1] > 6.5){
+            }else if(distance[1] > 8){
               Serial.println("Align Right");
               alignRight();
             }else{
@@ -93,31 +97,31 @@ void loop(){
               moveForward();
             }
           }else{
-            Serial.println("Enter 1");
+            Serial.println("Enter 2");
             update();
             Serial.print(String(angle) + " ");
             if(angle < 0){
-                if(angle < targetAngle - 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                    Serial.println("Align Left");
-                    alignLeft();
-                }else if(angle > targetAngle + 5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                    Serial.println("Align Right");
-                    alignRight();
-                }else{
-                    Serial.println("Move Forward");
-                    moveForward();
-                }
+              if(angle - targetAngle < -10){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                  Serial.println("Align Left");
+                  alignLeft();
+              }else if(angle - targetAngle > 10){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                  Serial.println("Align Right");
+                  alignRight();
+              }else{
+                  Serial.println("Move Forward");
+                  moveForward();
+              }
             }else{
-                if(angle < targetAngle + 8){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
-                    Serial.println("Align Left");
-                    alignLeft();
-                }else if(angle > targetAngle - 8){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
-                    Serial.println("Align Right");
-                    alignRight();
-                }else{
-                    Serial.println("Move Forward");
-                    moveForward();
-                }
+              if(angle - targetAngle > 5){ //|| (distance[1] < 6 || (distance[0] > 8 && distance[0] < 12))
+                  Serial.println("Align Right");
+                  alignRight();
+              }else if(angle - targetAngle  < -5){ //|| (distance[0] < 6 || (distance[1] > 8 && distance[1] < 12))
+                  Serial.println("Align Left");
+                  alignLeft();
+              }else{
+                  Serial.println("Move Forward");
+                  moveForward();
+              }
             }
           }
           current = millis();
@@ -133,6 +137,12 @@ void loop(){
   }
 
   if(isReachPoint){
+
+    // Check whether reach ending point but let the robot move until the ending point
+    bool isEnded = false;
+    if(xPosition == PUZZLE_X - 1 && yPosition == PUZZLE_Y - 1){
+      isEnded = true;
+    }
 
     delay(250);
 
@@ -458,10 +468,34 @@ void loop(){
           isUTurn = false;
           currentMode = RIGHT_DIRECTION;
           xPosition++;
+        }else if(currentMode == LEFT_DIRECTION){
+          if(maps[xPosition + 1][yPosition] == "X"){
+            maps[xPosition][yPosition] = "R";
+          }
+          isTurnLeft = true;
+          isTurnRight = false;
+          isUTurn = false;
+          currentMode = BACKWARD;
+          yPosition--;
         }
       }
     }
 
+
+    // ending point
+    if(isEnded){
+      maps[PUZZLE_X - 1][PUZZLE_Y - 1] = "E";
+      Serial.println("Reached End Point");
+      Serial.println(maze_Solving(maps));
+      while(1){;}
+    }
+
+    if(xPosition < 0 || yPosition < 0 || xPosition == PUZZLE_X || yPosition == PUZZLE_Y){
+      Serial.println("Array out of range.");
+      while(1){;}
+    }
+
+    
     printMaps();
 
     isMoving = false;
@@ -470,16 +504,6 @@ void loop(){
     delay(500);
 
     currentTime = millis();
-
-    // ending point
-    if(xPosition == PUZZLE_X - 1 && yPosition == PUZZLE_Y - 1){
-      Serial.println("Reached End Point");
-      while(1){;}
-    }
-
-    if(xPosition < 0 || yPosition < 0 || xPosition == PUZZLE_X || yPosition == PUZZLE_Y){
-      Serial.println("Array out of range.");
-      while(1){;}
-    }
+    
   }
 }
