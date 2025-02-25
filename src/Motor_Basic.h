@@ -100,8 +100,10 @@ void stop(){
 
 void alignLeft(){
     stop();
-    noInterrupts();
-    isInterruptOn = false;
+    if(isInterruptOn){
+        noInterrupts();
+        isInterruptOn = false;
+    }
     leftSpeedVal = equilibriumSpeed;
     rightSpeedVal = equilibriumSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
@@ -112,8 +114,10 @@ void alignLeft(){
 
 void alignRight(){
     stop();
-    noInterrupts();
-    isInterruptOn = false;
+    if(isInterruptOn){
+        noInterrupts();
+        isInterruptOn = false;
+    }
     leftSpeedVal = equilibriumSpeed;
     rightSpeedVal = equilibriumSpeed;
     analogWrite(motor1Speed,rightSpeedVal);
