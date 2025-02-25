@@ -75,7 +75,7 @@ void update(){
     gyroOutputBuffer -= GyroErrorZ;
     // Currently the raw values are in degrees per seconds, deg/s, so we need to multiply by sendonds (s) to get the angle in degrees
     yaw += gyroOutputBuffer * elapsedTime;
-    angle = round(yaw*10)/10.0; //if you mounted MPU6050 in a different orientation to me, angle may not = roll. It can roll, pitch, yaw or minus version of the three
+    angle = yaw; //if you mounted MPU6050 in a different orientation to me, angle may not = roll. It can roll, pitch, yaw or minus version of the three
     //for me, turning right reduces angle. Turning left increases angle.
 }
 
